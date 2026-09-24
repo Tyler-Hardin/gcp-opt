@@ -217,11 +217,23 @@ SKU_EXCLUDE_SUBSTRINGS: Final[tuple[str, ...]] = (
     "local ssd",
     "local storage",
     "asynchronous",
-    "provisioned iops",
-    "provisioned throughput",
     "storage pool",
     "high availability",
 )
+
+#: Provisioned-IOPS SKUs (Extreme PD and Hyperdisk).  ``pd-extreme`` charges for
+#: provisioned IOPS in addition to capacity.
+DISK_IOPS_SKU_MATCH: Final[dict[DiskKind, tuple[str, ...]]] = {
+    DiskKind.PD_EXTREME: ("extreme provisioned iops",),
+    DiskKind.HYPERDISK_EXTREME: ("hyperdisk extreme provisioned iops",),
+    DiskKind.HYPERDISK_BALANCED: ("hyperdisk balanced provisioned iops",),
+}
+
+#: Provisioned-throughput SKUs (Hyperdisk only).
+DISK_THROUGHPUT_SKU_MATCH: Final[dict[DiskKind, tuple[str, ...]]] = {
+    DiskKind.HYPERDISK_BALANCED: ("hyperdisk balanced provisioned throughput",),
+    DiskKind.HYPERDISK_THROUGHPUT: ("hyperdisk throughput provisioned throughput",),
+}
 
 #: Marker distinguishing regional (replicated) disk SKUs.
 REGIONAL_SKU_MARKER: Final[str] = "regional"

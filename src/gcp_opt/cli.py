@@ -19,6 +19,7 @@ from gcp_opt.export import candidate_matrix, write_csv, write_json
 from gcp_opt.models import DiskKind, DiskOption, MachineTypeInfo, SnapshotKind
 from gcp_opt.pricing import BillingCatalogClient
 from gcp_opt.query import (
+    ALL_MODELED_DISK_KINDS,
     DEFAULT_DISK_KINDS,
     Requirement,
     max_throughput_option,
@@ -33,9 +34,11 @@ def _load_catalog() -> Catalog:
     return Catalog(Dataset.load_bundled())
 
 
-def _parse_kinds(value: str) -> tuple[DiskKind, ...]:
+def _parse_kinds(
+    value: str | None, default: tuple[DiskKind, ...] = DEFAULT_DISK_KINDS
+) -> tuple[DiskKind, ...]:
     kinds: list[DiskKind] = []
-    for token in value.split(","):
+    for token in (value or "").split(","):
         token = token.strip()
         if not token:
             continue
@@ -45,7 +48,7 @@ def _parse_kinds(value: str) -> tuple[DiskKind, ...]:
             raise argparse.ArgumentTypeError(
                 f"unknown disk kind {token!r}; choose from {', '.join(_ALL_KINDS)}"
             ) from error
-    return tuple(kinds) or DEFAULT_DISK_KINDS
+    return tuple(kinds) or default
 
 
 def _parse_sizes(value: str) -> list[Decimal]:
@@ -290,11 +293,18 @@ def build_parser() -> argparse.ArgumentParser:
         func=cmd_sources
     )
 
-    def add_selection(p: argparse.ArgumentParser) -> None:
+    def add_selection(
+        p: argparse.ArgumentParser,
+        default_kinds: tuple[DiskKind, ...] = DEFAULT_DISK_KINDS,
+    ) -> None:
         p.add_argument("--machine-types", help="comma-separated machine types (default: all)")
         p.add_argument("--family", help="filter machine types by family prefix, e.g. n2")
         p.add_argument("--region", default=None, help="pricing region (default: book region)")
-        p.add_argument("--kinds", default=",".join(k.value for k in DEFAULT_DISK_KINDS))
+        p.add_argument(
+            "--kinds",
+            default=",".join(k.value for k in default_kinds),
+            help="comma-separated disk kinds (default: %(default)s)",
+        )
         p.add_argument(
             "--allow-us-list-price",
             action="store_true",
@@ -314,14 +324,14 @@ def build_parser() -> argparse.ArgumentParser:
     p_min.add_argument("--min-read-iops", type=int)
     p_min.add_argument("--min-write-iops", type=int)
     p_min.add_argument("--max-monthly-cost", help="monthly disk budget in USD")
-    add_selection(p_min)
+    add_selection(p_min, ALL_MODELED_DISK_KINDS)
     p_min.set_defaults(func=cmd_min_cost)
 
     p_bw = sub.add_parser("max-bandwidth", help="max throughput subject to a monthly disk budget")
     p_bw.add_argument("--budget", required=True, help="monthly disk budget in USD")
     p_bw.add_argument("--min-size", help="minimum total capacity, e.g. 10TB")
     p_bw.add_argument("--metric", choices=("read", "write", "balanced"), default="read")
-    add_selection(p_bw)
+    add_selection(p_bw, ALL_MODELED_DISK_KINDS)
     p_bw.set_defaults(func=cmd_max_bandwidth)
 
     p_export = sub.add_parser("export", help="export a candidate matrix for cvxopt/MILP")

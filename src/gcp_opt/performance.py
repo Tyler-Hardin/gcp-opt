@@ -225,6 +225,121 @@ def required_size_gib(
     return smallest
 
 
+def required_provisioned_iops(
+    model: DiskPerformanceModel,
+    *,
+    read_iops: DecimalLike | None = None,
+    write_iops: DecimalLike | None = None,
+    read_mibps: DecimalLike | None = None,
+    write_mibps: DecimalLike | None = None,
+    machine_limit: MachineTypeDiskLimit | None = None,
+) -> Decimal:
+    """Minimum provisioned IOPS meeting every supplied target.
+
+    For provisioned-performance disks such as ``pd-extreme`` the provisioned level
+    drives both IOPS and throughput (Extreme PD: 256 KiB/s per provisioned IOPS),
+    so a throughput target ``t`` MiB/s requires ``t / 0.25`` IOPS.
+
+    Raises:
+        ValueError: for disks that are not provisioned by IOPS.
+        InfeasibleTargetError: if any target exceeds a machine or disk-type cap.
+    """
+    if not model.provisioned_iops:
+        raise ValueError(
+            f"{model.disk_kind} is size-scaled, not provisioned; use required_size_gib()"
+        )
+
+    per_iop = model.throughput_mibps_per_provisioned_iop
+    required = Decimal(0)
+
+    def demand(
+        target: DecimalLike,
+        *,
+        instance_cap: Decimal | None,
+        type_cap: Decimal | None,
+        target_name: str,
+    ) -> None:
+        nonlocal required
+        value = to_decimal(target)
+        if instance_cap is not None and value > instance_cap:
+            raise InfeasibleTargetError(
+                f"target {target_name}={value} exceeds the machine-type ceiling {instance_cap}",
+                target=target_name,
+                limit_kind="instance_machine_type",
+            )
+        if type_cap is not None and value > type_cap:
+            raise InfeasibleTargetError(
+                f"target {target_name}={value} exceeds the disk-type cap {type_cap}",
+                target=target_name,
+                limit_kind="disk_type_cap",
+            )
+        required = max(required, value)
+
+    for name, target, instance_cap, type_cap in (
+        (
+            "read_iops",
+            read_iops,
+            machine_limit.max_read_iops if machine_limit else None,
+            model.max_read_iops,
+        ),
+        (
+            "write_iops",
+            write_iops,
+            machine_limit.max_write_iops if machine_limit else None,
+            model.max_write_iops,
+        ),
+    ):
+        if target is not None:
+            demand(target, instance_cap=instance_cap, type_cap=type_cap, target_name=name)
+
+    throughput_targets = [
+        (
+            "read_mibps",
+            read_mibps,
+            machine_limit.max_read_mibps if machine_limit else None,
+            model.max_read_mibps,
+            machine_limit.max_read_iops if machine_limit else None,
+            model.max_read_iops,
+        ),
+        (
+            "write_mibps",
+            write_mibps,
+            machine_limit.max_write_mibps if machine_limit else None,
+            model.max_write_mibps,
+            machine_limit.max_write_iops if machine_limit else None,
+            model.max_write_iops,
+        ),
+    ]
+    for name, target, instance_mibps, type_mibps, instance_iops, type_iops in throughput_targets:
+        if target is None:
+            continue
+        demand(target, instance_cap=instance_mibps, type_cap=type_mibps, target_name=name)
+        if per_iop is None or per_iop <= 0:
+            raise InfeasibleTargetError(
+                f"{model.disk_kind} has no throughput-per-IOPS model",
+                target=name,
+                limit_kind="disk_model",
+            )
+        # The IOPS level needed to sustain the throughput must itself fit the caps.
+        demand(
+            to_decimal(target) / per_iop,
+            instance_cap=instance_iops,
+            type_cap=type_iops,
+            target_name=f"{name}_as_iops",
+        )
+
+    if model.provisioned_iops_max is not None and required > model.provisioned_iops_max:
+        raise InfeasibleTargetError(
+            f"targets need {required} IOPS but the disk-type maximum is "
+            f"{model.provisioned_iops_max}",
+            target="provisioned_iops",
+            limit_kind="disk_type_cap",
+        )
+    if model.provisioned_iops_min is not None:
+        required = max(required, model.provisioned_iops_min)
+    return required
+
+
 def knee_size_gib(
     model: DiskPerformanceModel,
     machine_limit: MachineTypeDiskLimit,

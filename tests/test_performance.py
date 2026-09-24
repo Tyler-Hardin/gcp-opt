@@ -23,6 +23,7 @@ from gcp_opt.errors import InfeasibleTargetError
 from gcp_opt.models import DiskKind, MachineTypeDiskLimit, Scope, SourceRef
 from gcp_opt.performance import (
     achievable_performance,
+    required_provisioned_iops,
     required_size_gib,
     saturation_size_gib,
 )
@@ -223,3 +224,38 @@ def test_provisioned_iops_disk_requires_iops() -> None:
     envelope = achievable_performance(model, 1000, provisioned_iops=10_000)
     assert envelope.read_iops == Decimal(10_000)
     assert envelope.read_mibps == Decimal(2500)  # 10,000 * 256 KiB/s
+
+
+def test_required_provisioned_iops_from_throughput() -> None:
+    model = constants.ZONAL_DISK_MODELS[DiskKind.PD_EXTREME]
+    # 4,000 MiB/s needs 16,000 IOPS at 0.25 MiB/s per IOPS.
+    assert required_provisioned_iops(model, read_mibps=Decimal(4000)) == Decimal(16000)
+
+
+def test_required_provisioned_iops_from_iops_and_minimum() -> None:
+    model = constants.ZONAL_DISK_MODELS[DiskKind.PD_EXTREME]
+    assert required_provisioned_iops(model, read_iops=Decimal(5000)) == Decimal(5000)
+    # No targets -> the documented 2,500 IOPS floor.
+    assert required_provisioned_iops(model) == Decimal(2500)
+    # A tiny throughput request is still raised to the floor.
+    assert required_provisioned_iops(model, read_mibps=Decimal(100)) == Decimal(2500)
+
+
+def test_required_provisioned_iops_respects_caps() -> None:
+    model = constants.ZONAL_DISK_MODELS[DiskKind.PD_EXTREME]
+    with pytest.raises(InfeasibleTargetError) as info:
+        required_provisioned_iops(model, read_mibps=Decimal(4001))  # type cap
+    assert info.value.limit_kind == "disk_type_cap"
+
+    with pytest.raises(InfeasibleTargetError) as info:
+        required_provisioned_iops(
+            model,
+            read_mibps=Decimal(3000),
+            machine_limit=_limits(read_mibps=2500, read_iops=120000),
+        )
+    assert info.value.limit_kind == "instance_machine_type"
+
+    with pytest.raises(ValueError, match="size-scaled"):
+        required_provisioned_iops(
+            constants.ZONAL_DISK_MODELS[DiskKind.PD_SSD], read_iops=Decimal(10)
+        )

@@ -57,8 +57,38 @@ def test_max_bandwidth_under_budget_spends_no_more_than_budget(catalog: Catalog)
     )
     assert option.monthly_cost_usd <= Decimal(2000)
     assert option.size_gib >= _TEN_TB_GIB
-    # The documented per-instance PD read ceiling is 1,200 MiB/s.
-    assert option.read_mibps == Decimal(1200)
+    # Provisioned Extreme PD beats the 1,200 MiB/s Balanced/SSD ceiling, and the
+    # disk-type read cap is 4,000 MiB/s.
+    assert option.disk_kind is DiskKind.PD_EXTREME
+    assert Decimal(1200) < option.read_mibps <= Decimal(4000)
+
+
+def test_four_gbps_is_solvable_with_provisioned_extreme(catalog: Catalog) -> None:
+    """4 GB/s (3,814.7 MiB/s) fits the 4,000 MiB/s Extreme PD ceiling on one VM."""
+    target = units.gb_per_s_to_mibps(4)
+    requirement = Requirement.build(min_total_size_gib=_TEN_TB_GIB, min_read_mibps=target)
+    option = min_cost_option(catalog, catalog.machine_names(), requirement=requirement)
+
+    assert option.disk_kind is DiskKind.PD_EXTREME
+    assert option.read_mibps >= target
+    assert option.size_gib >= _TEN_TB_GIB
+    assert option.provisioned_iops is not None
+    assert option.provisioned_iops > 0
+    assert option.capacity_monthly_cost_usd is not None
+    assert option.provisioned_iops_monthly_cost_usd is not None
+    assert option.monthly_cost_usd == (
+        option.capacity_monthly_cost_usd + option.provisioned_iops_monthly_cost_usd
+    )
+    # 3,814.7 MiB/s / 0.25 MiB/s-per-IOPS = 15,258.789 provisioned IOPS.
+    assert option.provisioned_iops == target / Decimal("0.25")
+
+
+def test_ten_gbps_still_exceeds_the_extreme_ceiling(catalog: Catalog) -> None:
+    requirement = Requirement.build(
+        min_total_size_gib=_TEN_TB_GIB, min_read_mibps=_TEN_GBPS_MIBPS
+    )
+    with pytest.raises(InfeasibleTargetError, match="no single-instance"):
+        min_cost_option(catalog, catalog.machine_names(), requirement=requirement)
 
 
 def test_max_bandwidth_infeasible_when_budget_below_minimum_size(catalog: Catalog) -> None:

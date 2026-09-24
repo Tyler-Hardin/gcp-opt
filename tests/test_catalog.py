@@ -10,7 +10,7 @@ from gcp_opt import constants
 from gcp_opt.catalog import Catalog
 from gcp_opt.dataset import Dataset
 from gcp_opt.errors import PriceUnavailableError, UnmodeledDiskKindError
-from gcp_opt.models import DiskKind, Scope, SnapshotKind
+from gcp_opt.models import DiskKind, Scope, SkuRole, SnapshotKind
 
 
 def test_bundled_snapshots_load_and_verify(catalog: Catalog) -> None:
@@ -116,3 +116,29 @@ def test_dataset_load_is_repeatable() -> None:
     second = Dataset.load_bundled()
     assert first.limits == second.limits
     assert first.prices == second.prices
+
+
+def test_extreme_requires_provisioned_iops(catalog: Catalog) -> None:
+    with pytest.raises(PriceUnavailableError, match="provisioned"):
+        catalog.disk_option("n2-standard-64", DiskKind.PD_EXTREME, 9313)
+
+
+def test_extreme_cost_is_capacity_plus_provisioned_iops(catalog: Catalog) -> None:
+    option = catalog.disk_option(
+        "n2-standard-64", DiskKind.PD_EXTREME, 9313, provisioned_iops=16000
+    )
+    assert option.provisioned_iops == Decimal(16000)
+    assert option.provisioned_iops_monthly_cost_usd == Decimal("0.000089041") * 730 * 16000
+    assert option.capacity_monthly_cost_usd is not None
+    assert option.monthly_cost_usd == (
+        option.capacity_monthly_cost_usd + option.provisioned_iops_monthly_cost_usd
+    )
+    # 16,000 provisioned IOPS * 256 KiB/s = 4,000 MiB/s, capped by the VM/type.
+    assert option.read_mibps == Decimal(4000)
+
+
+def test_bundled_book_has_extreme_iops_sku(catalog: Catalog) -> None:
+    sku = catalog.price_sku(DiskKind.PD_EXTREME, role=SkuRole.PROVISIONED_IOPS)
+    assert sku is not None
+    assert sku.usage_unit == "hour"
+    assert sku.tiers[-1].unit_price == Decimal("0.000089041")

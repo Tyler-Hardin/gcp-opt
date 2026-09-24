@@ -4,7 +4,7 @@
   "provenance": {
     "method": "google_cloud_docs_scrape",
     "source_url": "https://docs.cloud.google.com/compute/docs/general-purpose-machines",
-    "retrieved_at": "2026-09-24T08:30:35Z",
+    "retrieved_at": "2026-09-24T09:01:12Z",
     "generator": "gcp-opt",
     "notes": "Machine shapes scraped from machine-family docs; the Compute API is authoritative."
   },

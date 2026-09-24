@@ -55,15 +55,24 @@ The offsets are **+3,000 IOPS / +140 MiB/s** (balanced) and **+6,000 / +240**
 `tests/test_performance.py` re-derives **every row of Google's per-size tables**
 from them.
 
-### 1.3 Units are MiB/s, and a single VM cannot reach 10 GB/s of PD
+### 1.3 Units are MiB/s, and a single VM caps Persistent Disk throughput
 
 Google documents throughput in **MiB/s**, not MB/s. `0.28 MB/s/GB` and
-`0.28 MiB/s/GB` differ by ~5%. And the per-VM Persistent Disk ceiling is
-**1,200 MiB/s** for Balanced/SSD (~1.26 GB/s) or **4,000 MiB/s** for Extreme — so
-*"minimum 10 GB/s"* is **not achievable on one instance**. `gcp_opt` reports this
-as a hard infeasibility and tells you the binding ceiling; you reach 10 GB/s by
-scaling out (see §5), which also requires instance pricing that this dataset does
-not include.
+`0.28 MiB/s/GB` differ by ~5%. The per-VM Persistent Disk ceiling is
+**1,200 MiB/s** for Balanced/SSD (~1.26 GB/s) — but **4,000 MiB/s for Extreme PD**
+(~4.19 GB/s). So:
+
+* **4 GB/s is solvable on one VM** with `pd-extreme` (which requires provisioned
+  IOPS). `gcp_opt` finds it: `min-cost --min-size 10TB --min-read-bandwidth 4GBps`
+  returns an `n2-*-64` + `pd-extreme` configuration.
+* **10 GB/s is not achievable on one instance.** `gcp_opt` reports the hard
+  infeasibility and the binding 4,000 MiB/s ceiling; you reach 10 GB/s by scaling
+  out (see §5), which also needs instance pricing that this dataset does not
+  include.
+
+Extreme PD is **provisioned**, so its cost is capacity *plus* provisioned IOPS
+(`$0.125/GiB-month + $0.065/IOPS-month` in the US list price), and its throughput
+is `provisioned_iops × 256 KiB/s`.
 
 ---
 
@@ -120,6 +129,9 @@ poetry run python -m gcp_opt options --machine-types n2-standard-8 --sizes 500,1
 
 # Cheapest config meeting targets ("min 1.1 GB/s and 10 TB")
 poetry run python -m gcp_opt min-cost --min-size 10TB --min-read-bandwidth 1.1GBps --family n2
+
+# 4 GB/s needs provisioned Extreme PD (min-cost considers it by default)
+poetry run python -m gcp_opt min-cost --min-size 10TB --min-read-bandwidth 4GBps
 
 # Max bandwidth for 10 TB under $2,000/month
 poetry run python -m gcp_opt max-bandwidth --budget 2000 --min-size 10TB --family n2
@@ -208,16 +220,20 @@ poetry run python tools/refresh_snapshots.py
 ## 8. Deliberate limitations
 
 * **Hyperdisk is not modeled.** Hyperdisk performance is *provisioned* (IOPS and
-  throughput are purchased separately), not size-scaled, and is documented on a
-  different page. Asking for it raises `UnmodeledDiskKindError` rather than
-  inventing constants. Prices for Hyperdisk SKUs are still captured.
+  throughput are purchased separately) and is documented on a different page.
+  Asking for it raises `UnmodeledDiskKindError` rather than inventing constants.
+  Hyperdisk prices (capacity, provisioned IOPS/throughput) *are* captured.
+* **`pd-extreme` is modeled** (provisioned IOPS, throughput = IOPS × 256 KiB/s,
+  capacity + IOPS priced). It is included in `min-cost`/`max-bandwidth` by default
+  and excluded from the size-scaling candidate export (`export`), which cannot
+  represent a provisioned dimension.
 * **Regional (replicated) PD is not modeled**; only zonal scaling rules are
   pinned. Regional *prices* are captured.
 * **One disk kind per instance in the query helpers.** The performance formulas
   aggregate all volumes of one type, so splitting a size across disks of the same
   type changes neither cost nor performance; mixing types under a shared IOPS
   budget is a richer problem left to your solver.
-* **VM instance cost is excluded** (only disk capacity prices are fetched).
+* **VM instance cost is excluded** (only disk prices are fetched).
 * Golden values were captured **2026-09-24**; the tests fail if Google changes a
   constant, which is the point.
 

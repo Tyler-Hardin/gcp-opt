@@ -40,6 +40,18 @@ class Scope(StrEnum):
     REGIONAL = "regional"
 
 
+class SkuRole(StrEnum):
+    """Which part of a disk's cost a SKU prices.
+
+    Persistent Disks are priced by capacity alone.  Extreme PD (and Hyperdisk) also
+    charge for *provisioned* performance, which is a separate SKU.
+    """
+
+    CAPACITY = "capacity"
+    PROVISIONED_IOPS = "provisioned_iops"
+    PROVISIONED_THROUGHPUT = "provisioned_throughput"
+
+
 class SnapshotKind(StrEnum):
     """Kinds of committed snapshot files."""
 
@@ -337,6 +349,7 @@ class PriceSku(BaseModel):
     currency_code: str
     tiers: tuple[PriceTier, ...]
     source: SourceRef
+    role: SkuRole = SkuRole.CAPACITY
 
     def cost_for(self, quantity: Decimal, *, hours: Decimal = units.HOURS_PER_MONTH) -> Decimal:
         """Return the cost of ``quantity`` usage units held for ``hours`` hours.
@@ -412,6 +425,12 @@ class DiskOption(BaseModel):
     binding: BindingConstraints
     price_sku_id: str
     price_note: str
+    #: Provisioned IOPS for provisioned-performance disks (``pd-extreme``), else None.
+    provisioned_iops: Decimal | None = None
+    #: Cost of capacity alone (equals ``monthly_cost_usd`` for non-provisioned disks).
+    capacity_monthly_cost_usd: Decimal | None = None
+    #: Cost of provisioned IOPS alone, or None for non-provisioned disks.
+    provisioned_iops_monthly_cost_usd: Decimal | None = None
 
     @property
     def cost_per_gib_month(self) -> Decimal:

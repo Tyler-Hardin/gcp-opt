@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Sequence
+from decimal import Decimal
 
 from gcp_opt import constants
 from gcp_opt.dataset import Dataset
@@ -15,6 +16,7 @@ from gcp_opt.models import (
     MachineTypeInfo,
     PriceSku,
     Scope,
+    SkuRole,
 )
 from gcp_opt.performance import achievable_performance
 from gcp_opt.pricing import find_price
@@ -107,9 +109,10 @@ class Catalog:
         *,
         region: str | None = None,
         scope: Scope = Scope.ZONAL,
+        role: SkuRole = SkuRole.CAPACITY,
         allow_us_list_price: bool = False,
     ) -> PriceSku | None:
-        """Return the capacity SKU for a disk kind, honoring the region.
+        """Return the SKU for a disk kind/role, honoring the region.
 
         The bundled bootstrap price book holds US list prices.  Requesting a
         different region raises unless ``allow_us_list_price`` is set, so a
@@ -120,7 +123,7 @@ class Catalog:
         """
         book = self._dataset.prices
         requested = region or book.region
-        sku = find_price(book, disk_kind, scope)
+        sku = find_price(book, disk_kind, scope, role)
         if sku is None:
             return None
         if requested != book.region and not allow_us_list_price:
@@ -161,20 +164,44 @@ class Catalog:
         size = to_decimal(size_gib)
         model = self.disk_model(disk_kind, scope)
         limit = self.limit_for(machine_type, disk_kind, scope)
-        sku = self.price_sku(
-            disk_kind, region=region, scope=scope, allow_us_list_price=allow_us_list_price
+        capacity_sku = self.price_sku(
+            disk_kind,
+            region=region,
+            scope=scope,
+            role=SkuRole.CAPACITY,
+            allow_us_list_price=allow_us_list_price,
         )
-        if sku is None:
+        if capacity_sku is None:
             raise PriceUnavailableError(f"no capacity price found for {disk_kind} ({scope})")
+
+        if model.provisioned_iops and provisioned_iops is None:
+            raise PriceUnavailableError(
+                f"{disk_kind} performance is provisioned; pass provisioned_iops"
+            )
+        iops_cost: Decimal | None = None
+        if provisioned_iops is not None:
+            iops_sku = self.price_sku(
+                disk_kind,
+                region=region,
+                scope=scope,
+                role=SkuRole.PROVISIONED_IOPS,
+                allow_us_list_price=allow_us_list_price,
+            )
+            if iops_sku is None:
+                raise PriceUnavailableError(
+                    f"no provisioned-IOPS price found for {disk_kind} ({scope})"
+                )
+            iops_cost = iops_sku.cost_for(to_decimal(provisioned_iops))
 
         envelope = achievable_performance(
             model, size, machine_limit=limit, provisioned_iops=provisioned_iops
         )
         book = self._dataset.prices
         effective_region = region or book.region
-        note = sku.source.note or ""
+        note = capacity_sku.source.note or ""
         if effective_region != book.region:
             note = f"US list price used for {effective_region} (book region {book.region})"
+        capacity_cost = capacity_sku.cost_for(size)
 
         return DiskOption(
             machine_type=machine_type,
@@ -182,7 +209,7 @@ class Catalog:
             disk_kind=disk_kind,
             scope=scope,
             size_gib=size,
-            monthly_cost_usd=sku.cost_for(size),
+            monthly_cost_usd=capacity_cost + (iops_cost or Decimal(0)),
             read_iops=envelope.read_iops,
             write_iops=envelope.write_iops,
             read_mibps=envelope.read_mibps,
@@ -190,8 +217,11 @@ class Catalog:
             instance_bound=envelope.binding.instance_bound,
             instance_limit_known=limit is not None,
             binding=envelope.binding,
-            price_sku_id=sku.sku_id,
+            price_sku_id=capacity_sku.sku_id,
             price_note=note,
+            provisioned_iops=to_decimal(provisioned_iops) if provisioned_iops is not None else None,
+            capacity_monthly_cost_usd=capacity_cost,
+            provisioned_iops_monthly_cost_usd=iops_cost,
         )
 
     def disk_options(
@@ -206,6 +236,7 @@ class Catalog:
             DiskKind.PD_SSD,
         ),
         scope: Scope = Scope.ZONAL,
+        provisioned_iops: DecimalLike | None = None,
         allow_us_list_price: bool = False,
     ) -> list[DiskOption]:
         """Build options for a machine type across disk kinds and sizes."""
@@ -219,6 +250,7 @@ class Catalog:
                         size,
                         region=region,
                         scope=scope,
+                        provisioned_iops=provisioned_iops,
                         allow_us_list_price=allow_us_list_price,
                     )
                 )

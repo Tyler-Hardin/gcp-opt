@@ -9,10 +9,11 @@ from typing import Any
 import pytest
 
 from gcp_opt.errors import ApiAuthError
-from gcp_opt.models import DiskKind, Scope
+from gcp_opt.models import DiskKind, Scope, SkuRole
 from gcp_opt.pricing import (
     BillingCatalogClient,
     classify_disk_sku,
+    classify_sku,
     find_price,
     money_to_decimal,
     parse_sku,
@@ -177,3 +178,62 @@ def test_find_price_returns_none_when_absent() -> None:
     )
     assert find_price(book, DiskKind.PD_BALANCED) is not None
     assert find_price(book, DiskKind.PD_SSD) is None
+
+
+@pytest.mark.parametrize(
+    ("description", "expected"),
+    [
+        ("Extreme provisioned space", (DiskKind.PD_EXTREME, SkuRole.CAPACITY)),
+        ("Extreme provisioned IOPS", (DiskKind.PD_EXTREME, SkuRole.PROVISIONED_IOPS)),
+        (
+            "Hyperdisk Balanced provisioned space",
+            (DiskKind.HYPERDISK_BALANCED, SkuRole.CAPACITY),
+        ),
+        (
+            "Hyperdisk Balanced provisioned IOPS",
+            (DiskKind.HYPERDISK_BALANCED, SkuRole.PROVISIONED_IOPS),
+        ),
+        (
+            "Hyperdisk Throughput provisioned throughput",
+            (DiskKind.HYPERDISK_THROUGHPUT, SkuRole.PROVISIONED_THROUGHPUT),
+        ),
+    ],
+)
+def test_classify_sku_separates_roles(
+    description: str, expected: tuple[DiskKind, SkuRole]
+) -> None:
+    assert classify_sku(description, Scope.ZONAL) == expected
+
+
+def test_classify_disk_sku_ignores_provisioned_performance() -> None:
+    # classify_disk_sku is the capacity-only view.
+    assert classify_disk_sku("Extreme provisioned IOPS", Scope.ZONAL) is None
+    assert classify_disk_sku("Extreme provisioned space", Scope.ZONAL) is DiskKind.PD_EXTREME
+
+
+def test_parse_sku_records_role() -> None:
+    assert parse_sku(_sku("X", "Extreme provisioned IOPS", ["us-central1"], 89_041)).role is (
+        SkuRole.PROVISIONED_IOPS
+    )
+
+
+def test_price_book_keeps_capacity_and_iops_skus() -> None:
+    transport = FakeTransport(
+        [
+            {
+                "skus": [
+                    _sku("EX-SPACE", "Extreme provisioned space", ["us-central1"], 171_233),
+                    _sku("EX-IOPS", "Extreme provisioned IOPS", ["us-central1"], 89_041),
+                ]
+            }
+        ]
+    )
+    book = BillingCatalogClient(api_key="K", transport=transport).fetch_disk_price_book(
+        region="us-central1"
+    )
+    capacity = find_price(book, DiskKind.PD_EXTREME, role=SkuRole.CAPACITY)
+    iops = find_price(book, DiskKind.PD_EXTREME, role=SkuRole.PROVISIONED_IOPS)
+    assert capacity is not None
+    assert capacity.sku_id == "EX-SPACE"
+    assert iops is not None
+    assert iops.sku_id == "EX-IOPS"

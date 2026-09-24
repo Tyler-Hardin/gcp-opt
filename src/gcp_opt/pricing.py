@@ -24,6 +24,7 @@ from gcp_opt.models import (
     PriceTier,
     Provenance,
     Scope,
+    SkuRole,
     SourceMethod,
     SourceRef,
 )
@@ -79,15 +80,34 @@ def parse_sku(raw: Mapping[str, Any]) -> PriceSku:
         currency_code=str(pricing_info.get("currencyCode", "USD")),
         tiers=tuple(tiers),
         source=_BILLING_SOURCE,
+        role=sku_role_of(str(raw.get("description", ""))),
     )
 
 
-def classify_disk_sku(description: str, scope: Scope) -> DiskKind | None:
-    """Map a SKU description to a :class:`DiskKind`, or ``None`` if unrelated.
+def sku_role_of(description: str) -> SkuRole:
+    """Classify a SKU description as capacity, provisioned IOPS or throughput."""
+    text = description.lower()
+    if "provisioned iops" in text:
+        return SkuRole.PROVISIONED_IOPS
+    if "provisioned throughput" in text:
+        return SkuRole.PROVISIONED_THROUGHPUT
+    return SkuRole.CAPACITY
+
+
+_ROLE_PATTERNS: dict[SkuRole, dict[DiskKind, tuple[str, ...]]] = {
+    SkuRole.CAPACITY: constants.DISK_SKU_MATCH,
+    SkuRole.PROVISIONED_IOPS: constants.DISK_IOPS_SKU_MATCH,
+    SkuRole.PROVISIONED_THROUGHPUT: constants.DISK_THROUGHPUT_SKU_MATCH,
+}
+
+
+def classify_sku(description: str, scope: Scope) -> tuple[DiskKind, SkuRole] | None:
+    """Map a SKU description to ``(disk kind, price role)``, or ``None``.
 
     Handles the two historical description styles ("Balanced PD Capacity" in the
-    catalog and "Balanced provisioned space" on the pricing page) and keeps
-    Hyperdisk SKUs from matching the plain-PD patterns.
+    catalog and "Balanced provisioned space" on the pricing page), keeps Hyperdisk
+    SKUs from matching plain-PD patterns, and separates provisioned-performance
+    SKUs (Extreme PD IOPS) from capacity SKUs.
     """
     text = description.lower()
     if any(marker in text for marker in constants.SKU_EXCLUDE_SUBSTRINGS):
@@ -98,13 +118,26 @@ def classify_disk_sku(description: str, scope: Scope) -> DiskKind | None:
     if scope is Scope.ZONAL and is_regional:
         return None
 
+    role = sku_role_of(description)
     is_hyperdisk = "hyperdisk" in text
-    for kind, patterns in constants.DISK_SKU_MATCH.items():
+    for kind, patterns in _ROLE_PATTERNS[role].items():
         if ("hyperdisk" in kind.value) is not is_hyperdisk:
             continue
         if any(pattern in text for pattern in patterns):
-            return kind
+            return kind, role
     return None
+
+
+def classify_disk_sku(description: str, scope: Scope) -> DiskKind | None:
+    """Map a SKU description to a capacity :class:`DiskKind`, or ``None``.
+
+    Provisioned-IOPS/throughput SKUs return ``None``; use :func:`classify_sku` to
+    see those.
+    """
+    result = classify_sku(description, scope)
+    if result is None or result[1] is not SkuRole.CAPACITY:
+        return None
+    return result[0]
 
 
 class BillingCatalogClient:
@@ -187,7 +220,7 @@ class BillingCatalogClient:
             if region not in regions:
                 continue
             parsed = parse_sku(raw)
-            if classify_disk_sku(parsed.description, scope) is None:
+            if classify_sku(parsed.description, scope) is None:
                 continue
             skus.append(parsed)
         if not skus:
@@ -213,9 +246,10 @@ def find_price(
     book: PriceBook,
     disk_kind: DiskKind,
     scope: Scope = Scope.ZONAL,
+    role: SkuRole = SkuRole.CAPACITY,
 ) -> PriceSku | None:
-    """Return the capacity SKU for a disk kind/scope, or ``None`` if absent."""
+    """Return the SKU for a disk kind, scope and price role, or ``None`` if absent."""
     for sku in book.skus:
-        if classify_disk_sku(sku.description, scope) is disk_kind:
+        if classify_sku(sku.description, scope) == (disk_kind, role):
             return sku
     return None

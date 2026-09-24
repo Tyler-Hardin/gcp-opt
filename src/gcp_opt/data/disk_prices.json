@@ -4,17 +4,17 @@
   "provenance": {
     "method": "google_cloud_docs_scrape",
     "source_url": "https://cloud.google.com/compute/disks-image-pricing",
-    "retrieved_at": "2026-09-24T08:30:31Z",
+    "retrieved_at": "2026-09-24T09:01:07Z",
     "generator": "gcp-opt",
     "notes": "Bootstrap US list prices; use the Cloud Billing Catalog API for regional rates."
   },
-  "payload_sha256": "ec7684a1a9b0a124869e9bbacabcdbf5479e4353c6ce8c1d6df1a48d3f7a6747",
+  "payload_sha256": "003c7939e8b3d1ed36e853fa045baf7420dfa312d617ec4a401829b5a97660f6",
   "payload": {
     "currency_code": "USD",
     "region": "us-central1",
     "skus": [
       {
-        "sku_id": "docs-us-list::pd-standard::zonal",
+        "sku_id": "docs-us-list::pd-standard::zonal::capacity",
         "description": "Standard provisioned space",
         "resource_family": "Storage",
         "usage_type": "OnDemand",
@@ -36,10 +36,11 @@
         "source": {
           "url": "https://cloud.google.com/compute/disks-image-pricing",
           "note": "US list price scraped from the disk pricing page. Regional prices differ (e.g. Sao Paulo, Tokyo); run `python -m gcp_opt refresh-prices --region ...` with the Cloud Billing Catalog API for exact regional rates."
-        }
+        },
+        "role": "capacity"
       },
       {
-        "sku_id": "docs-us-list::pd-ssd::zonal",
+        "sku_id": "docs-us-list::pd-ssd::zonal::capacity",
         "description": "SSD provisioned space",
         "resource_family": "Storage",
         "usage_type": "OnDemand",
@@ -57,10 +58,11 @@
         "source": {
           "url": "https://cloud.google.com/compute/disks-image-pricing",
           "note": "US list price scraped from the disk pricing page. Regional prices differ (e.g. Sao Paulo, Tokyo); run `python -m gcp_opt refresh-prices --region ...` with the Cloud Billing Catalog API for exact regional rates."
-        }
+        },
+        "role": "capacity"
       },
       {
-        "sku_id": "docs-us-list::pd-balanced::zonal",
+        "sku_id": "docs-us-list::pd-balanced::zonal::capacity",
         "description": "Balanced provisioned space",
         "resource_family": "Storage",
         "usage_type": "OnDemand",
@@ -78,10 +80,11 @@
         "source": {
           "url": "https://cloud.google.com/compute/disks-image-pricing",
           "note": "US list price scraped from the disk pricing page. Regional prices differ (e.g. Sao Paulo, Tokyo); run `python -m gcp_opt refresh-prices --region ...` with the Cloud Billing Catalog API for exact regional rates."
-        }
+        },
+        "role": "capacity"
       },
       {
-        "sku_id": "docs-us-list::pd-extreme::zonal",
+        "sku_id": "docs-us-list::pd-extreme::zonal::capacity",
         "description": "Extreme provisioned space",
         "resource_family": "Storage",
         "usage_type": "OnDemand",
@@ -99,10 +102,33 @@
         "source": {
           "url": "https://cloud.google.com/compute/disks-image-pricing",
           "note": "US list price scraped from the disk pricing page. Regional prices differ (e.g. Sao Paulo, Tokyo); run `python -m gcp_opt refresh-prices --region ...` with the Cloud Billing Catalog API for exact regional rates."
-        }
+        },
+        "role": "capacity"
       },
       {
-        "sku_id": "docs-us-list::pd-standard::regional",
+        "sku_id": "docs-us-list::pd-extreme::zonal::provisioned_iops",
+        "description": "Extreme provisioned IOPS",
+        "resource_family": "Storage",
+        "usage_type": "OnDemand",
+        "usage_unit": "hour",
+        "service_regions": [
+          "us-central1"
+        ],
+        "currency_code": "USD",
+        "tiers": [
+          {
+            "start_usage_amount": "0",
+            "unit_price": "0.000089041"
+          }
+        ],
+        "source": {
+          "url": "https://cloud.google.com/compute/disks-image-pricing",
+          "note": "US list price scraped from the disk pricing page. Regional prices differ (e.g. Sao Paulo, Tokyo); run `python -m gcp_opt refresh-prices --region ...` with the Cloud Billing Catalog API for exact regional rates."
+        },
+        "role": "provisioned_iops"
+      },
+      {
+        "sku_id": "docs-us-list::pd-standard::regional::capacity",
         "description": "Regional standard provisioned space",
         "resource_family": "Storage",
         "usage_type": "OnDemand",
@@ -120,10 +146,11 @@
         "source": {
           "url": "https://cloud.google.com/compute/disks-image-pricing",
           "note": "US list price scraped from the disk pricing page. Regional prices differ (e.g. Sao Paulo, Tokyo); run `python -m gcp_opt refresh-prices --region ...` with the Cloud Billing Catalog API for exact regional rates."
-        }
+        },
+        "role": "capacity"
       },
       {
-        "sku_id": "docs-us-list::pd-ssd::regional",
+        "sku_id": "docs-us-list::pd-ssd::regional::capacity",
         "description": "Regional SSD provisioned space",
         "resource_family": "Storage",
         "usage_type": "OnDemand",
@@ -141,10 +168,11 @@
         "source": {
           "url": "https://cloud.google.com/compute/disks-image-pricing",
           "note": "US list price scraped from the disk pricing page. Regional prices differ (e.g. Sao Paulo, Tokyo); run `python -m gcp_opt refresh-prices --region ...` with the Cloud Billing Catalog API for exact regional rates."
-        }
+        },
+        "role": "capacity"
       },
       {
-        "sku_id": "docs-us-list::pd-balanced::regional",
+        "sku_id": "docs-us-list::pd-balanced::regional::capacity",
         "description": "Regional balanced provisioned space",
         "resource_family": "Storage",
         "usage_type": "OnDemand",
@@ -162,10 +190,11 @@
         "source": {
           "url": "https://cloud.google.com/compute/disks-image-pricing",
           "note": "US list price scraped from the disk pricing page. Regional prices differ (e.g. Sao Paulo, Tokyo); run `python -m gcp_opt refresh-prices --region ...` with the Cloud Billing Catalog API for exact regional rates."
-        }
+        },
+        "role": "capacity"
       },
       {
-        "sku_id": "docs-us-list::hyperdisk-extreme::zonal",
+        "sku_id": "docs-us-list::hyperdisk-extreme::zonal::capacity",
         "description": "Hyperdisk Extreme provisioned space",
         "resource_family": "Storage",
         "usage_type": "OnDemand",
@@ -183,10 +212,33 @@
         "source": {
           "url": "https://cloud.google.com/compute/disks-image-pricing",
           "note": "US list price scraped from the disk pricing page. Regional prices differ (e.g. Sao Paulo, Tokyo); run `python -m gcp_opt refresh-prices --region ...` with the Cloud Billing Catalog API for exact regional rates."
-        }
+        },
+        "role": "capacity"
       },
       {
-        "sku_id": "docs-us-list::hyperdisk-throughput::zonal",
+        "sku_id": "docs-us-list::hyperdisk-extreme::zonal::provisioned_iops",
+        "description": "Hyperdisk Extreme provisioned IOPS",
+        "resource_family": "Storage",
+        "usage_type": "OnDemand",
+        "usage_unit": "hour",
+        "service_regions": [
+          "us-central1"
+        ],
+        "currency_code": "USD",
+        "tiers": [
+          {
+            "start_usage_amount": "0",
+            "unit_price": "0.000043836"
+          }
+        ],
+        "source": {
+          "url": "https://cloud.google.com/compute/disks-image-pricing",
+          "note": "US list price scraped from the disk pricing page. Regional prices differ (e.g. Sao Paulo, Tokyo); run `python -m gcp_opt refresh-prices --region ...` with the Cloud Billing Catalog API for exact regional rates."
+        },
+        "role": "provisioned_iops"
+      },
+      {
+        "sku_id": "docs-us-list::hyperdisk-throughput::zonal::capacity",
         "description": "Hyperdisk Throughput provisioned space",
         "resource_family": "Storage",
         "usage_type": "OnDemand",
@@ -204,10 +256,33 @@
         "source": {
           "url": "https://cloud.google.com/compute/disks-image-pricing",
           "note": "US list price scraped from the disk pricing page. Regional prices differ (e.g. Sao Paulo, Tokyo); run `python -m gcp_opt refresh-prices --region ...` with the Cloud Billing Catalog API for exact regional rates."
-        }
+        },
+        "role": "capacity"
       },
       {
-        "sku_id": "docs-us-list::hyperdisk-balanced::zonal",
+        "sku_id": "docs-us-list::hyperdisk-throughput::zonal::provisioned_throughput",
+        "description": "Hyperdisk Throughput provisioned throughput",
+        "resource_family": "Storage",
+        "usage_type": "OnDemand",
+        "usage_unit": "hour",
+        "service_regions": [
+          "us-central1"
+        ],
+        "currency_code": "USD",
+        "tiers": [
+          {
+            "start_usage_amount": "0",
+            "unit_price": "0.000342466"
+          }
+        ],
+        "source": {
+          "url": "https://cloud.google.com/compute/disks-image-pricing",
+          "note": "US list price scraped from the disk pricing page. Regional prices differ (e.g. Sao Paulo, Tokyo); run `python -m gcp_opt refresh-prices --region ...` with the Cloud Billing Catalog API for exact regional rates."
+        },
+        "role": "provisioned_throughput"
+      },
+      {
+        "sku_id": "docs-us-list::hyperdisk-balanced::zonal::capacity",
         "description": "Hyperdisk Balanced provisioned space",
         "resource_family": "Storage",
         "usage_type": "OnDemand",
@@ -225,13 +300,58 @@
         "source": {
           "url": "https://cloud.google.com/compute/disks-image-pricing",
           "note": "US list price scraped from the disk pricing page. Regional prices differ (e.g. Sao Paulo, Tokyo); run `python -m gcp_opt refresh-prices --region ...` with the Cloud Billing Catalog API for exact regional rates."
-        }
+        },
+        "role": "capacity"
+      },
+      {
+        "sku_id": "docs-us-list::hyperdisk-balanced::zonal::provisioned_iops",
+        "description": "Hyperdisk Balanced provisioned IOPS",
+        "resource_family": "Storage",
+        "usage_type": "OnDemand",
+        "usage_unit": "hour",
+        "service_regions": [
+          "us-central1"
+        ],
+        "currency_code": "USD",
+        "tiers": [
+          {
+            "start_usage_amount": "0",
+            "unit_price": "0.000006849"
+          }
+        ],
+        "source": {
+          "url": "https://cloud.google.com/compute/disks-image-pricing",
+          "note": "US list price scraped from the disk pricing page. Regional prices differ (e.g. Sao Paulo, Tokyo); run `python -m gcp_opt refresh-prices --region ...` with the Cloud Billing Catalog API for exact regional rates."
+        },
+        "role": "provisioned_iops"
+      },
+      {
+        "sku_id": "docs-us-list::hyperdisk-balanced::zonal::provisioned_throughput",
+        "description": "Hyperdisk Balanced provisioned throughput",
+        "resource_family": "Storage",
+        "usage_type": "OnDemand",
+        "usage_unit": "hour",
+        "service_regions": [
+          "us-central1"
+        ],
+        "currency_code": "USD",
+        "tiers": [
+          {
+            "start_usage_amount": "0",
+            "unit_price": "0.000054795"
+          }
+        ],
+        "source": {
+          "url": "https://cloud.google.com/compute/disks-image-pricing",
+          "note": "US list price scraped from the disk pricing page. Regional prices differ (e.g. Sao Paulo, Tokyo); run `python -m gcp_opt refresh-prices --region ...` with the Cloud Billing Catalog API for exact regional rates."
+        },
+        "role": "provisioned_throughput"
       }
     ],
     "provenance": {
       "method": "google_cloud_docs_scrape",
       "source_url": "https://cloud.google.com/compute/disks-image-pricing",
-      "retrieved_at": "2026-09-24T08:30:31Z",
+      "retrieved_at": "2026-09-24T09:01:07Z",
       "generator": "gcp-opt",
       "notes": "Bootstrap US list prices; use the Cloud Billing Catalog API for regional rates."
     }

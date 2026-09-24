@@ -45,6 +45,7 @@ from gcp_opt.models import (  # noqa: E402
     PriceTier,
     Provenance,
     Scope,
+    SkuRole,
     SnapshotKind,
     SourceMethod,
     SourceRef,
@@ -208,33 +209,77 @@ def refresh_machine_types(pages: dict[str, str]) -> Path:
 # --------------------------------------------------------------------------- #
 # Bootstrap prices
 # --------------------------------------------------------------------------- #
-_PRICE_LABELS: dict[str, tuple[DiskKind, Scope]] = {
-    "standard provisioned space": (DiskKind.PD_STANDARD, Scope.ZONAL),
-    "balanced provisioned space": (DiskKind.PD_BALANCED, Scope.ZONAL),
-    "ssd provisioned space": (DiskKind.PD_SSD, Scope.ZONAL),
-    "extreme provisioned space": (DiskKind.PD_EXTREME, Scope.ZONAL),
-    "regional standard provisioned space": (DiskKind.PD_STANDARD, Scope.REGIONAL),
-    "regional balanced provisioned space": (DiskKind.PD_BALANCED, Scope.REGIONAL),
-    "regional ssd provisioned space": (DiskKind.PD_SSD, Scope.REGIONAL),
-    "hyperdisk balanced provisioned space": (DiskKind.HYPERDISK_BALANCED, Scope.ZONAL),
-    "hyperdisk extreme provisioned space": (DiskKind.HYPERDISK_EXTREME, Scope.ZONAL),
-    "hyperdisk throughput provisioned space": (DiskKind.HYPERDISK_THROUGHPUT, Scope.ZONAL),
+_PRICE_LABELS: dict[str, tuple[DiskKind, Scope, SkuRole]] = {
+    "standard provisioned space": (DiskKind.PD_STANDARD, Scope.ZONAL, SkuRole.CAPACITY),
+    "balanced provisioned space": (DiskKind.PD_BALANCED, Scope.ZONAL, SkuRole.CAPACITY),
+    "ssd provisioned space": (DiskKind.PD_SSD, Scope.ZONAL, SkuRole.CAPACITY),
+    "extreme provisioned space": (DiskKind.PD_EXTREME, Scope.ZONAL, SkuRole.CAPACITY),
+    "extreme provisioned iops": (DiskKind.PD_EXTREME, Scope.ZONAL, SkuRole.PROVISIONED_IOPS),
+    "regional standard provisioned space": (DiskKind.PD_STANDARD, Scope.REGIONAL, SkuRole.CAPACITY),
+    "regional balanced provisioned space": (DiskKind.PD_BALANCED, Scope.REGIONAL, SkuRole.CAPACITY),
+    "regional ssd provisioned space": (DiskKind.PD_SSD, Scope.REGIONAL, SkuRole.CAPACITY),
+    "hyperdisk balanced provisioned space": (
+        DiskKind.HYPERDISK_BALANCED,
+        Scope.ZONAL,
+        SkuRole.CAPACITY,
+    ),
+    "hyperdisk balanced provisioned iops": (
+        DiskKind.HYPERDISK_BALANCED,
+        Scope.ZONAL,
+        SkuRole.PROVISIONED_IOPS,
+    ),
+    "hyperdisk balanced provisioned throughput": (
+        DiskKind.HYPERDISK_BALANCED,
+        Scope.ZONAL,
+        SkuRole.PROVISIONED_THROUGHPUT,
+    ),
+    "hyperdisk extreme provisioned space": (
+        DiskKind.HYPERDISK_EXTREME,
+        Scope.ZONAL,
+        SkuRole.CAPACITY,
+    ),
+    "hyperdisk extreme provisioned iops": (
+        DiskKind.HYPERDISK_EXTREME,
+        Scope.ZONAL,
+        SkuRole.PROVISIONED_IOPS,
+    ),
+    "hyperdisk throughput provisioned space": (
+        DiskKind.HYPERDISK_THROUGHPUT,
+        Scope.ZONAL,
+        SkuRole.CAPACITY,
+    ),
+    "hyperdisk throughput provisioned throughput": (
+        DiskKind.HYPERDISK_THROUGHPUT,
+        Scope.ZONAL,
+        SkuRole.PROVISIONED_THROUGHPUT,
+    ),
 }
 
 _GIB_HOUR_MARKER = "/ 1 gibibyte hour"
+_HOUR_MARKER = "/ 1 hour"
+
+
+def _price_unit(cell: str) -> str | None:
+    """Return the billing unit a pricing cell is quoted in."""
+    lowered = cell.lower()
+    if _GIB_HOUR_MARKER in lowered:
+        return "gibibyte hour"
+    if _HOUR_MARKER in lowered:
+        return "hour"
+    return None
 
 
 def _tiers_from_price_cell(cell: str) -> tuple[PriceTier, ...]:
-    """Extract per-GiB-hour tiers from a pricing-table cell.
+    """Extract hourly price tiers from a pricing-table cell.
 
     Standard PD is listed as a free first tier plus a paid tier; everything else is a
-    single flat rate.  ``$0.000054795 / 1 gibibyte hour`` becomes one flat tier.
+    single flat rate.  ``$0.000054795 / 1 gibibyte hour`` becomes one flat tier and
+    ``$0.000089041 / 1 hour`` (Extreme provisioned IOPS) likewise.
     """
-    lowered = cell.lower()
-    if _GIB_HOUR_MARKER not in lowered:
+    if _price_unit(cell) is None:
         return ()
     prices: list[Decimal] = []
-    for fragment in lowered.split("$")[1:]:
+    for fragment in cell.lower().split("$")[1:]:
         number = fragment.strip().split("/")[0].strip().split()[0]
         try:
             prices.append(Decimal(number.replace(",", "")))
@@ -251,9 +296,11 @@ def _tiers_from_price_cell(cell: str) -> tuple[PriceTier, ...]:
     )
 
 
-def parse_disk_prices(html: str) -> list[tuple[str, tuple[DiskKind, Scope], tuple[PriceTier, ...]]]:
-    """Find provisioned-space price rows in the disk pricing page."""
-    results: list[tuple[str, tuple[DiskKind, Scope], tuple[PriceTier, ...]]] = []
+def parse_disk_prices(
+    html: str,
+) -> list[tuple[str, tuple[DiskKind, Scope, SkuRole], str, tuple[PriceTier, ...]]]:
+    """Find provisioned-space / provisioned-IOPS price rows in the disk pricing page."""
+    results: list[tuple[str, tuple[DiskKind, Scope, SkuRole], str, tuple[PriceTier, ...]]] = []
     for block in doc_parse.parse_blocks(html):
         if block.kind != "table" or not block.headers:
             continue
@@ -266,9 +313,10 @@ def parse_disk_prices(html: str) -> list[tuple[str, tuple[DiskKind, Scope], tupl
             mapping = _PRICE_LABELS.get(label)
             if mapping is None:
                 continue
+            unit = _price_unit(row[1])
             tiers = _tiers_from_price_cell(row[1])
-            if tiers:
-                results.append((row[0], mapping, tiers))
+            if unit is not None and tiers:
+                results.append((row[0], mapping, unit, tiers))
     return results
 
 
@@ -289,17 +337,18 @@ def refresh_prices(html: str) -> Path:
     )
     skus = tuple(
         PriceSku(
-            sku_id=f"docs-us-list::{DiskKind(kind)}::{scope}",
+            sku_id=f"docs-us-list::{kind}::{scope}::{role}",
             description=label,
             resource_family="Storage",
             usage_type="OnDemand",
-            usage_unit="gibibyte hour",
+            usage_unit=unit,
             service_regions=("us-central1",),
             currency_code="USD",
             tiers=tiers,
             source=source,
+            role=role,
         )
-        for label, (kind, scope), tiers in parsed
+        for label, (kind, scope, role), unit, tiers in parsed
     )
     provenance = Provenance(
         method=SourceMethod.DOCS_SCRAPE,

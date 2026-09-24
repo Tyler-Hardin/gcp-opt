@@ -1,10 +1,18 @@
 """Query helpers that answer concrete sizing/cost questions from the catalog.
 
 These are deliberately solver-free: for a fixed machine type and disk kind the
-cheapest feasible size is the analytic inverse of the performance formula, and
-"max bandwidth for a budget" is a monotone cost inversion.  Rich multi-variable
-problems (several disk kinds sharing one IOPS budget, mixed fleets) belong in
-cvxopt; :mod:`gcp_opt.export` packages the candidate rows for that.
+cheapest feasible size (or provisioned-IOPS level) is the analytic inverse of the
+performance formula, and "max bandwidth for a budget" is a monotone cost inversion.
+Rich multi-variable problems (several disk kinds sharing one IOPS budget, mixed
+fleets) belong in cvxopt; :mod:`gcp_opt.export` packages the candidate rows for that.
+
+Two families of disks are handled:
+
+* **size-scaled** (``pd-standard``, ``pd-balanced``, ``pd-ssd``): performance grows
+  with capacity, so the cheapest feasible size is ``required_size_gib``.
+* **provisioned** (``pd-extreme``): performance is bought directly, so the cheapest
+  solution provisions the minimum IOPS that meets the targets
+  (:func:`~gcp_opt.performance.required_provisioned_iops`) at the minimum capacity.
 """
 
 from __future__ import annotations
@@ -14,16 +22,27 @@ from decimal import ROUND_CEILING, ROUND_FLOOR, Decimal
 from typing import Literal
 
 from gcp_opt.catalog import Catalog
-from gcp_opt.errors import InfeasibleTargetError, UnmodeledDiskKindError
-from gcp_opt.models import DiskKind, DiskOption, PriceSku, Scope
-from gcp_opt.performance import required_size_gib, saturation_size_gib
+from gcp_opt.errors import InfeasibleTargetError, PriceUnavailableError, UnmodeledDiskKindError
+from gcp_opt.models import DiskKind, DiskOption, DiskPerformanceModel, PriceSku, Scope, SkuRole
+from gcp_opt.performance import (
+    required_provisioned_iops,
+    required_size_gib,
+    saturation_size_gib,
+)
 from gcp_opt.units import DecimalLike, to_decimal
 
-DEFAULT_DISK_KINDS: tuple[DiskKind, ...] = (
+#: Disk kinds whose performance scales with capacity (safe for candidate export).
+SIZE_SCALED_DISK_KINDS: tuple[DiskKind, ...] = (
     DiskKind.PD_STANDARD,
     DiskKind.PD_BALANCED,
     DiskKind.PD_SSD,
 )
+
+#: Every disk kind this package can model, including provisioned ``pd-extreme``.
+ALL_MODELED_DISK_KINDS: tuple[DiskKind, ...] = (*SIZE_SCALED_DISK_KINDS, DiskKind.PD_EXTREME)
+
+#: Backwards-compatible alias for the size-scaled set.
+DEFAULT_DISK_KINDS: tuple[DiskKind, ...] = SIZE_SCALED_DISK_KINDS
 
 #: Practical ceiling for inverting tiered pricing; ~9.3 PiB.
 _MAX_SEARCH_GIB = Decimal(10**7)
@@ -66,27 +85,26 @@ class Requirement:
         )
 
 
-def max_affordable_size(
+def max_affordable_quantity(
     sku: PriceSku,
     budget: DecimalLike,
     *,
-    max_size_gib: Decimal = _MAX_SEARCH_GIB,
+    cap: Decimal,
+    step: Decimal = Decimal(1),
 ) -> Decimal:
-    """Largest whole-GiB size whose monthly cost does not exceed ``budget``.
+    """Largest whole-``step`` quantity whose monthly cost does not exceed ``budget``.
 
-    Uses bisection because tiered pricing (Standard PD's free first tier) makes the
-    close-form inversion piecewise.  Cost is monotone non-decreasing in size.
+    Works for both capacity (quantity in GiB) and provisioned IOPS (quantity in
+    IOPS).  Uses bisection because tiered pricing (Standard PD's free first tier)
+    makes the closed-form inversion piecewise; cost is monotone in quantity.
     """
     budget_value = to_decimal(budget)
-    if budget_value <= 0:
+    if budget_value <= 0 or cap <= 0:
         return Decimal(0)
     positive = [tier.unit_price for tier in sku.tiers if tier.unit_price > 0]
     if not positive:
-        return max_size_gib
-    high = min(
-        max_size_gib,
-        (budget_value / min(positive)).to_integral_value(rounding=ROUND_FLOOR),
-    )
+        return cap
+    high = min(cap, (budget_value / min(positive)).to_integral_value(rounding=ROUND_FLOOR))
     if high <= 0:
         return Decimal(0)
     low = Decimal(0)
@@ -98,7 +116,37 @@ def max_affordable_size(
             low = midpoint
         else:
             high = midpoint - 1
+    if step > 1:
+        low = (low // step) * step
     return low
+
+
+def max_affordable_size(
+    sku: PriceSku,
+    budget: DecimalLike,
+    *,
+    max_size_gib: Decimal = _MAX_SEARCH_GIB,
+) -> Decimal:
+    """Largest whole-GiB capacity whose monthly cost does not exceed ``budget``."""
+    return max_affordable_quantity(sku, budget, cap=max_size_gib)
+
+
+def _minimum_size(model: DiskPerformanceModel, requirement: Requirement) -> Decimal:
+    floor = model.min_size_gib or Decimal(0)
+    return max(requirement.min_total_size_gib, floor)
+
+
+def _fits_machine(
+    catalog: Catalog, machine_type: str, size_gib: Decimal
+) -> tuple[bool, str | None]:
+    info = catalog.machine_info(machine_type)
+    if info is None:
+        return True, None
+    if info.maximum_total_size_gib is not None and size_gib > info.maximum_total_size_gib:
+        return False, f"needs {size_gib} GiB but the VM allows {info.maximum_total_size_gib} GiB"
+    if info.maximum_persistent_disks == 0:
+        return False, "machine allows no disks"
+    return True, None
 
 
 def min_cost_option(
@@ -107,7 +155,7 @@ def min_cost_option(
     *,
     requirement: Requirement,
     region: str | None = None,
-    disk_kinds: tuple[DiskKind, ...] = DEFAULT_DISK_KINDS,
+    disk_kinds: tuple[DiskKind, ...] = ALL_MODELED_DISK_KINDS,
     scope: Scope = Scope.ZONAL,
     allow_us_list_price: bool = False,
     require_known_limit: bool = True,
@@ -119,7 +167,7 @@ def min_cost_option(
         machine_types: machine types to consider.
         requirement: capacity/performance/cost targets.
         region: region for pricing (defaults to the price book's region).
-        disk_kinds: disk kinds to consider.
+        disk_kinds: disk kinds to consider (defaults to all modeled kinds).
         scope: zonal or regional.
         allow_us_list_price: accept US list prices for a non-US region.
         require_known_limit: skip machines whose VM-level disk ceiling is unknown.
@@ -131,7 +179,6 @@ def min_cost_option(
     rejections: list[str] = []
 
     for machine_type in machine_types:
-        info = catalog.machine_info(machine_type)
         for disk_kind in disk_kinds:
             try:
                 model = catalog.disk_model(disk_kind, scope)
@@ -141,42 +188,55 @@ def min_cost_option(
             if limit is None and require_known_limit:
                 rejections.append(f"{machine_type}/{disk_kind}: no documented VM disk ceiling")
                 continue
+
+            provisioned_iops: Decimal | None = None
+            if model.provisioned_iops:
+                try:
+                    provisioned_iops = required_provisioned_iops(
+                        model,
+                        read_iops=requirement.min_read_iops,
+                        write_iops=requirement.min_write_iops,
+                        read_mibps=requirement.min_read_mibps,
+                        write_mibps=requirement.min_write_mibps,
+                        machine_limit=limit,
+                    )
+                except InfeasibleTargetError as error:
+                    rejections.append(f"{machine_type}/{disk_kind}: {error}")
+                    continue
+                size = _minimum_size(model, requirement)
+            else:
+                try:
+                    size = required_size_gib(
+                        model,
+                        read_iops=requirement.min_read_iops,
+                        write_iops=requirement.min_write_iops,
+                        read_mibps=requirement.min_read_mibps,
+                        write_mibps=requirement.min_write_mibps,
+                        machine_limit=limit,
+                    )
+                except InfeasibleTargetError as error:
+                    rejections.append(f"{machine_type}/{disk_kind}: {error}")
+                    continue
+                size = max(size, requirement.min_total_size_gib)
+
+            fits, why = _fits_machine(catalog, machine_type, size)
+            if not fits:
+                rejections.append(f"{machine_type}/{disk_kind}: {why}")
+                continue
+
             try:
-                size = required_size_gib(
-                    model,
-                    read_iops=requirement.min_read_iops,
-                    write_iops=requirement.min_write_iops,
-                    read_mibps=requirement.min_read_mibps,
-                    write_mibps=requirement.min_write_mibps,
-                    machine_limit=limit,
+                option = catalog.disk_option(
+                    machine_type,
+                    disk_kind,
+                    size,
+                    region=region,
+                    scope=scope,
+                    provisioned_iops=provisioned_iops,
+                    allow_us_list_price=allow_us_list_price,
                 )
-            except InfeasibleTargetError as error:
+            except PriceUnavailableError as error:
                 rejections.append(f"{machine_type}/{disk_kind}: {error}")
                 continue
-
-            size = max(size, requirement.min_total_size_gib)
-            if (
-                info is not None
-                and info.maximum_total_size_gib is not None
-                and size > info.maximum_total_size_gib
-            ):
-                rejections.append(
-                    f"{machine_type}/{disk_kind}: needs {size} GiB but the VM allows "
-                    f"{info.maximum_total_size_gib} GiB"
-                )
-                continue
-            if info is not None and info.maximum_persistent_disks == 0:
-                rejections.append(f"{machine_type}/{disk_kind}: machine allows no disks")
-                continue
-
-            option = catalog.disk_option(
-                machine_type,
-                disk_kind,
-                size,
-                region=region,
-                scope=scope,
-                allow_us_list_price=allow_us_list_price,
-            )
             if (
                 requirement.max_monthly_cost_usd is not None
                 and option.monthly_cost_usd > requirement.max_monthly_cost_usd
@@ -199,6 +259,88 @@ def min_cost_option(
     return best
 
 
+def _provisioned_budget_option(
+    catalog: Catalog,
+    machine_type: str,
+    disk_kind: DiskKind,
+    model: DiskPerformanceModel,
+    requirement: Requirement,
+    *,
+    budget: Decimal,
+    metric: ThroughputMetric,
+    region: str | None,
+    scope: Scope,
+    allow_us_list_price: bool,
+) -> DiskOption | None:
+    """Best provisioned-IOPS option for ``pd-extreme`` within a budget.
+
+    Buys the minimum capacity, then spends the remaining budget on as many
+    provisioned IOPS as the VM and disk-type ceilings allow for ``metric``.
+    """
+    limit = catalog.limit_for(machine_type, disk_kind, scope)
+    capacity_sku = catalog.price_sku(
+        disk_kind,
+        region=region,
+        scope=scope,
+        role=SkuRole.CAPACITY,
+        allow_us_list_price=allow_us_list_price,
+    )
+    iops_sku = catalog.price_sku(
+        disk_kind,
+        region=region,
+        scope=scope,
+        role=SkuRole.PROVISIONED_IOPS,
+        allow_us_list_price=allow_us_list_price,
+    )
+    if capacity_sku is None or iops_sku is None:
+        return None
+    size = _minimum_size(model, requirement)
+    fits, _ = _fits_machine(catalog, machine_type, size)
+    if not fits:
+        return None
+    capacity_cost = capacity_sku.cost_for(size)
+    if capacity_cost > budget:
+        return None
+
+    per_iop = model.throughput_mibps_per_provisioned_iop or Decimal(0)
+    if per_iop <= 0:
+        return None
+
+    directions = ("read", "write") if metric == "balanced" else (metric,)
+    caps: list[Decimal] = []
+    if model.provisioned_iops_max is not None:
+        caps.append(model.provisioned_iops_max)
+    for direction in directions:
+        if limit is not None:
+            caps.append(limit.max_read_iops if direction == "read" else limit.max_write_iops)
+        type_mibps = model.max_read_mibps if direction == "read" else model.max_write_mibps
+        if type_mibps is not None:
+            caps.append(type_mibps / per_iop)
+        if limit is not None:
+            instance_mibps = (
+                limit.max_read_mibps if direction == "read" else limit.max_write_mibps
+            )
+            caps.append(instance_mibps / per_iop)
+    effective_cap = min(caps) if caps else Decimal(10**7)
+
+    affordable = max_affordable_quantity(iops_sku, budget - capacity_cost, cap=effective_cap)
+    iops = affordable
+    if model.provisioned_iops_min is not None:
+        iops = max(iops, model.provisioned_iops_min)
+    if effective_cap > 0:
+        iops = min(iops, effective_cap)
+    option = catalog.disk_option(
+        machine_type,
+        disk_kind,
+        size,
+        region=region,
+        scope=scope,
+        provisioned_iops=iops,
+        allow_us_list_price=allow_us_list_price,
+    )
+    return option if option.monthly_cost_usd <= budget else None
+
+
 def max_throughput_option(
     catalog: Catalog,
     machine_types: list[str],
@@ -207,7 +349,7 @@ def max_throughput_option(
     min_total_size_gib: DecimalLike = 0,
     metric: ThroughputMetric = "read",
     region: str | None = None,
-    disk_kinds: tuple[DiskKind, ...] = DEFAULT_DISK_KINDS,
+    disk_kinds: tuple[DiskKind, ...] = ALL_MODELED_DISK_KINDS,
     scope: Scope = Scope.ZONAL,
     allow_us_list_price: bool = False,
     require_known_limit: bool = True,
@@ -215,13 +357,16 @@ def max_throughput_option(
     """Find the option with the highest throughput within a monthly disk budget.
 
     Throughput rises monotonically with size until the VM or disk-type ceiling, so
-    each candidate simply takes the largest affordable size.
+    each size-scaled candidate takes the largest useful affordable size.  For
+    provisioned disks the budget is split: minimum capacity first, then as many
+    provisioned IOPS as the remainder affords.
 
     Raises:
         InfeasibleTargetError: if nothing fits the budget and minimum size.
     """
     budget = to_decimal(budget_usd)
-    min_size = to_decimal(min_total_size_gib)
+    requirement = Requirement.build(min_total_size_gib=min_total_size_gib)
+    min_size = requirement.min_total_size_gib
     best: DiskOption | None = None
     best_score = Decimal(-1)
     rejections: list[str] = []
@@ -237,43 +382,58 @@ def max_throughput_option(
             if limit is None and require_known_limit:
                 rejections.append(f"{machine_type}/{disk_kind}: no documented VM disk ceiling")
                 continue
-            sku = catalog.price_sku(
-                disk_kind, region=region, scope=scope, allow_us_list_price=allow_us_list_price
-            )
-            if sku is None:
-                continue
-            affordable = max_affordable_size(sku, budget)
-            if info is not None and info.maximum_total_size_gib is not None:
-                affordable = min(affordable, info.maximum_total_size_gib)
-            if affordable < min_size:
-                rejections.append(
-                    f"{machine_type}/{disk_kind}: affordable {affordable} GiB < "
-                    f"required {min_size} GiB"
+
+            if model.provisioned_iops:
+                option = _provisioned_budget_option(
+                    catalog,
+                    machine_type,
+                    disk_kind,
+                    model,
+                    requirement,
+                    budget=budget,
+                    metric=metric,
+                    region=region,
+                    scope=scope,
+                    allow_us_list_price=allow_us_list_price,
                 )
-                continue
+                if option is None:
+                    rejections.append(f"{machine_type}/{disk_kind}: no affordable option")
+                    continue
+            else:
+                sku = catalog.price_sku(
+                    disk_kind, region=region, scope=scope, allow_us_list_price=allow_us_list_price
+                )
+                if sku is None:
+                    continue
+                affordable = max_affordable_size(sku, budget)
+                if info is not None and info.maximum_total_size_gib is not None:
+                    affordable = min(affordable, info.maximum_total_size_gib)
+                if affordable < min_size:
+                    rejections.append(
+                        f"{machine_type}/{disk_kind}: affordable {affordable} GiB < "
+                        f"required {min_size} GiB"
+                    )
+                    continue
+                # Throughput stops improving at the saturation size; buy only up to
+                # it (or up to what the budget allows, whichever is smaller).
+                saturation = saturation_size_gib(
+                    model, limit, write=metric == "write", throughput=True
+                )
+                target = max(min_size, saturation) if saturation is not None else min_size
+                size = min(affordable, target)
+                if size < min_size:
+                    continue
+                option = catalog.disk_option(
+                    machine_type,
+                    disk_kind,
+                    size,
+                    region=region,
+                    scope=scope,
+                    allow_us_list_price=allow_us_list_price,
+                )
+                if option.monthly_cost_usd > budget:  # guard against rounding
+                    continue
 
-            # Throughput stops improving at the saturation size; buy only up to it
-            # (or up to what the budget allows, whichever is smaller).
-            saturation = saturation_size_gib(
-                model, limit, write=metric == "write", throughput=True
-            )
-            target = min_size
-            if saturation is not None:
-                target = max(target, saturation)
-            size = min(affordable, target)
-            if size < min_size:
-                continue
-
-            option = catalog.disk_option(
-                machine_type,
-                disk_kind,
-                size,
-                region=region,
-                scope=scope,
-                allow_us_list_price=allow_us_list_price,
-            )
-            if option.monthly_cost_usd > budget:  # guard against rounding
-                continue
             score = _score(option, metric)
             if best is None or score > best_score or (
                 score == best_score and option.monthly_cost_usd < best.monthly_cost_usd
