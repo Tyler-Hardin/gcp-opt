@@ -3,7 +3,7 @@
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/)
 [![mypy: strict](https://img.shields.io/badge/mypy-strict-blue.svg)](https://mypy.readthedocs.io/)
 [![lint: ruff](https://img.shields.io/badge/lint-ruff-261230.svg)](https://docs.astral.sh/ruff/)
-[![tests: 153 passing](https://img.shields.io/badge/tests-153%20passing-brightgreen.svg)](#development)
+[![tests: 155 passing](https://img.shields.io/badge/tests-155%20passing-brightgreen.svg)](#development)
 [![license: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 **Grounded, typed data for a Google Cloud machine + disk configuration optimizer.**
@@ -384,7 +384,7 @@ rather than scraped. Until a price list is present, `ConfigOption.cost_basis` is
 
 ```bash
 poetry install --with dev
-poetry run pytest          # 153 tests: unit, golden, property-based
+poetry run pytest          # 155 tests: unit, golden, property-based
 poetry run mypy            # strict
 poetry run ruff check .    # lint + import order + docstrings
 ```

@@ -216,3 +216,24 @@ def test_cli_table_shows_provisioned_iops(capsys: pytest.CaptureFixture[str]) ->
     )
     out = capsys.readouterr().out
     assert "provIOPS" in out
+
+
+def test_cli_machines_shows_ram_and_net_after_machine_type(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    assert main(["machines", "--machine-types", "n2-standard-8"]) == 0
+    lines = capsys.readouterr().out.splitlines()
+    assert lines[0].split()[:3] == ["machine_type", "ram", "net"]
+    row = lines[2].split()
+    assert row[0] == "n2-standard-8"
+    assert row[1] == "32"  # RAM in GiB
+    assert row[2] == "16"  # default egress bandwidth in Gbps
+
+
+def test_cli_machines_ram_is_terse_for_fractional_values(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    assert main(["machines", "--machine-types", "n1-standard-1"]) == 0
+    row = capsys.readouterr().out.splitlines()[2].split()
+    assert row[0] == "n1-standard-1"
+    assert row[1] == "3.75"  # not "3.8" or "3.750"

@@ -120,6 +120,11 @@ def _fmt_int(value: int | None) -> str:
     return "-" if value is None else str(value)
 
 
+def _fmt_terse(value: Decimal | None) -> str:
+    """Format a decimal without trailing zeros (``32``, ``3.75``, ``400``)."""
+    return "-" if value is None else format(value.normalize(), "f")
+
+
 def _requirement_from_args(args: argparse.Namespace) -> Requirement:
     """Build a :class:`Requirement` from the shared CLI constraint flags."""
 
@@ -255,8 +260,8 @@ def cmd_machines(args: argparse.Namespace) -> int:
     infos.sort(key=key)
 
     header = (
-        f"{'machine_type':22s} {'family':>7s} {'vcpu':>5s} {'memGiB':>9s} "
-        f"{'netGbps':>7s} {'tier1':>6s} {'maxDisks':>8s} {'maxTotGiB':>10s} {'$/mo':>9s}"
+        f"{'machine_type':22s} {'ram':>8s} {'net':>6s} {'family':>7s} {'vcpu':>5s} "
+        f"{'tier1':>6s} {'maxDisks':>8s} {'maxTotGiB':>10s} {'$/mo':>9s}"
     )
     print(header)
     print("-" * len(header))
@@ -264,9 +269,10 @@ def cmd_machines(args: argparse.Namespace) -> int:
         hourly = catalog.machine_hourly_price(info.name, args.region)
         monthly = hourly * units.HOURS_PER_MONTH if hourly is not None else None
         print(
-            f"{info.name:22s} {info.family or '-':>7s} {_fmt_int(info.guest_cpus):>5s} "
-            f"{_fmt(info.memory_gb, 1):>9s} {_fmt(info.network_egress_gbps, 1):>7s} "
-            f"{_fmt(info.network_tier1_egress_gbps, 1):>6s} "
+            f"{info.name:22s} {_fmt_terse(info.memory_gb):>8s} "
+            f"{_fmt_terse(info.network_egress_gbps):>6s} {info.family or '-':>7s} "
+            f"{_fmt_int(info.guest_cpus):>5s} "
+            f"{_fmt_terse(info.network_tier1_egress_gbps):>6s} "
             f"{_fmt_int(info.maximum_persistent_disks):>8s} "
             f"{_fmt(info.maximum_total_size_gib, 0):>10s} {_fmt(monthly, 2):>9s}"
         )
