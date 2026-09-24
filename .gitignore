@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+dist/
+build/
+
+# Poetry / venv
+.venv/
+.venv*/
+
+# Local scratch (downloaded docs, dumps, experiments)
+.scratch/
+
+# Local secrets
+.env
+.tokens/
+*.service-account.json

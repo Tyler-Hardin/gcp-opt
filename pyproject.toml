@@ -1,0 +1,93 @@
+[project]
+name = "gcp-opt"
+version = "0.1.0"
+description = "Typed, grounded data layer that feeds a GCP disk cost/performance optimizer."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "gcp-opt contributors" }]
+dependencies = [
+    "pydantic>=2.9,<3",
+]
+
+[tool.poetry]
+packages = [{ include = "gcp_opt", from = "src" }]
+
+[tool.poetry.group.dev.dependencies]
+hypothesis = ">=6.112"
+mypy = ">=1.11"
+pytest = ">=8.3"
+pytest-cov = ">=5.0"
+ruff = ">=0.6"
+
+[build-system]
+requires = ["poetry-core>=2.0"]
+build-backend = "poetry.core.masonry.api"
+
+# ---------------------------------------------------------------------------
+# ruff
+# ---------------------------------------------------------------------------
+[tool.ruff]
+line-length = 100
+extend-exclude = [".scratch"]
+target-version = "py311"
+src = ["src", "tests", "tools"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "F",    # pyflakes
+    "I",    # isort
+    "N",    # pep8-naming
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "SIM",  # flake8-simplify
+    "ANN",  # flake8-annotations
+    "RUF",  # ruff-specific
+    "PT",   # flake8-pytest-style
+    "D",    # pydocstyle
+]
+ignore = [
+    "D203",  # one-blank-line-before-class (conflicts with D211)
+    "D213",  # multi-line-summary-second-line (conflicts with D212)
+    "D107",  # missing docstring in __init__ (constructors are self-evident)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["ANN", "D", "S101"]  # tests may omit annotations/docstrings
+"tools/**" = ["ANN", "D"]          # dev-only scripts
+"src/gcp_opt/cli.py" = ["D"]       # argparse plumbing
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+# ---------------------------------------------------------------------------
+# mypy
+# ---------------------------------------------------------------------------
+[tool.mypy]
+python_version = "3.11"
+strict = true
+files = ["src", "tests", "tools"]
+plugins = ["pydantic.mypy"]
+warn_unreachable = true
+show_error_codes = true
+pretty = false
+
+[[tool.mypy.overrides]]
+module = ["tests.*", "tools.*"]
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+warn_return_any = false
+
+# ---------------------------------------------------------------------------
+# pytest
+# ---------------------------------------------------------------------------
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers --strict-config"
+filterwarnings = ["error"]
+markers = ["network: tests that hit the public internet (deselected by default)"]
+
+[tool.coverage.run]
+source = ["src/gcp_opt"]
+branch = true

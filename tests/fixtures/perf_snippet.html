@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html><body><main>
+<h2 id="perf">Performance</h2>
+
+<h2 id="machine-type-disk-limits">Persistent Disk performance limits by machine series</h2>
+
+<h3 id="t1-instances">T1 Instances</h3>
+<div><devsite-selector><section>
+<h3 id="pd-balanced">pd-balanced</h3>
+<table>
+<thead><tr><th>Number of vCPUs</th><th>Maximum write IOPS</th><th>Maximum read IOPS</th><th>Maximum write throughput (MiB/s)</th><th>Maximum read throughput (MiB/s)</th></tr></thead>
+<tbody>
+<tr><td>2-7</td><td>15,000</td><td>15,000</td><td>240</td><td>240</td></tr>
+<tr><td>8-15</td><td>15,000</td><td>15,000</td><td>800<sup>1</sup></td><td>800</td></tr>
+<tr><td>64 or more</td><td>80,000</td><td>80,000</td><td>1,200<sup>1</sup></td><td>1,200</td></tr>
+</tbody></table>
+</section><section>
+<h3 id="pd-ssd_1">pd-ssd</h3>
+<table>
+<thead><tr><th>Number of vCPUs</th><th>Maximum write IOPS</th><th>Maximum read IOPS</th><th>Maximum write throughput (MiB/s)</th><th>Maximum read throughput (MiB/s)</th></tr></thead>
+<tbody>
+<tr><td>2-7</td><td>15,000</td><td>15,000</td><td>240</td><td>240</td></tr>
+</tbody></table>
+</section></devsite-selector></div>
+
+<h3 id="t1-mega-instances">T1 Mega instances</h3>
+<div><devsite-selector><section>
+<h3 id="pd-balanced_1">pd-balanced</h3>
+<table>
+<thead><tr><th>Machine type</th><th>Maximum write IOPS</th><th>Maximum read IOPS</th><th>Maximum write throughput (MiB/s)</th><th>Maximum read throughput (MiB/s)</th></tr></thead>
+<tbody>
+<tr><td>t1-megagpu-8g</td><td>60,000</td><td>60,000</td><td>1,200</td><td>1,200</td></tr>
+</tbody></table>
+</section></devsite-selector></div>
+
+<h3 id="example">Example</h3>
+<p>Not a real family.</p>
+
+<h2 id="size_price_performance">Performance limits by size for zonal and regional Persistent Disk</h2>
+<h3 id="ssd-size">SSD Persistent Disk performance limits by size</h3>
+<h4 id="zonal-ssd">Zonal SSD Persistent Disk</h4>
+<table>
+<thead><tr><th>Size (GiB)</th><th>Maximum (read/write) IOPS</th><th>Maximum (read/write) throughput (MiB/s)</th></tr></thead>
+<tbody><tr><td>10</td><td>6,300</td><td>244.8</td></tr></tbody>
+</table>
+<h4 id="regional-balanced">Regional Balanced Persistent Disk</h4>
+<table>
+<thead><tr><th>Size (GiB)</th><th>Maximum read IOPS</th><th>Maximum write IOPS</th><th>Maximum read throughput (MiB/s)</th><th>Maximum write throughput (MiB/s)</th></tr></thead>
+<tbody><tr><td>10</td><td>3,060</td><td>3,060</td><td>142.8</td><td>142.8</td></tr></tbody>
+</table>
+
+<h2 id="machine-resources">Machine resources</h2>
+<table>
+<thead><tr><th>Machine types</th><th>vCPUs 1</th><th>Memory (GB)</th></tr></thead>
+<tbody>
+<tr><td>t1-standard-4</td><td>4</td><td>16</td></tr>
+<tr><td>t1-standard-8</td><td>8</td><td>32</td></tr>
+</tbody></table>
+<table>
+<thead><tr><th>Machine types</th><th>Max number of Persistent Disk (PDs) 1</th><th>Max total PD size (TiB)</th></tr></thead>
+<tbody>
+<tr><td>t1-standard-4</td><td>128</td><td>257</td></tr>
+</tbody></table>
+</main></body></html>

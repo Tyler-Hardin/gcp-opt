@@ -1,0 +1,4236 @@
+{
+  "schema_version": 1,
+  "kind": "machine-type-disk-limits",
+  "provenance": {
+    "method": "google_cloud_docs_scrape",
+    "source_url": "https://cloud.google.com/compute/docs/disks/performance",
+    "retrieved_at": "2026-09-24T08:30:30Z",
+    "generator": "gcp-opt",
+    "notes": "Per-machine-type and per-vCPU Persistent Disk ceilings. The Compute Engine machineTypes API does not expose disk IOPS/throughput, so this table is the authoritative source for the VM bottleneck."
+  },
+  "payload_sha256": "47d295c07b045d3409f6bd9ac9222da95354555b0ed3a9f0aa179d7055799f40",
+  "payload": {
+    "machine_type_limits": [
+      {
+        "machine_type": "a2-ultragpu-1g",
+        "family": "A2 Ultra instances",
+        "family_id": "a2",
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "15000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "800",
+        "max_write_mibps": "800",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "a2-ultragpu-2g",
+        "family": "A2 Ultra instances",
+        "family_id": "a2",
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "20000",
+        "max_write_iops": "20000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "a2-ultragpu-4g",
+        "family": "A2 Ultra instances",
+        "family_id": "a2",
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "50000",
+        "max_write_iops": "50000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "a2-ultragpu-8g",
+        "family": "A2 Ultra instances",
+        "family_id": "a2",
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "80000",
+        "max_write_iops": "80000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "a2-ultragpu-1g",
+        "family": "A2 Ultra instances",
+        "family_id": "a2",
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "15000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "800",
+        "max_write_mibps": "800",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "a2-ultragpu-2g",
+        "family": "A2 Ultra instances",
+        "family_id": "a2",
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "25000",
+        "max_write_iops": "25000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "a2-ultragpu-4g",
+        "family": "A2 Ultra instances",
+        "family_id": "a2",
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "60000",
+        "max_write_iops": "60000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "a2-ultragpu-8g",
+        "family": "A2 Ultra instances",
+        "family_id": "a2",
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "100000",
+        "max_write_iops": "100000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "a2-ultragpu-1g",
+        "family": "A2 Ultra instances",
+        "family_id": "a2",
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "5000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "800",
+        "max_write_mibps": "400",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "a2-ultragpu-2g",
+        "family": "A2 Ultra instances",
+        "family_id": "a2",
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "7500",
+        "max_write_iops": "15000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "400",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "a2-ultragpu-4g",
+        "family": "A2 Ultra instances",
+        "family_id": "a2",
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "7500",
+        "max_write_iops": "15000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "400",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "a2-ultragpu-8g",
+        "family": "A2 Ultra instances",
+        "family_id": "a2",
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "7500",
+        "max_write_iops": "15000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "400",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "a2-highgpu-1g",
+        "family": "A2 Standard instances",
+        "family_id": "a2",
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "15000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "800",
+        "max_write_mibps": "800",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "a2-highgpu-2g",
+        "family": "A2 Standard instances",
+        "family_id": "a2",
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "20000",
+        "max_write_iops": "20000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "a2-highgpu-4g",
+        "family": "A2 Standard instances",
+        "family_id": "a2",
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "50000",
+        "max_write_iops": "50000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "a2-highgpu-8g",
+        "family": "A2 Standard instances",
+        "family_id": "a2",
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "80000",
+        "max_write_iops": "80000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "a2-megagpu-16g",
+        "family": "A2 Standard instances",
+        "family_id": "a2",
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "80000",
+        "max_write_iops": "80000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "a2-highgpu-1g",
+        "family": "A2 Standard instances",
+        "family_id": "a2",
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "15000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "800",
+        "max_write_mibps": "800",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "a2-highgpu-2g",
+        "family": "A2 Standard instances",
+        "family_id": "a2",
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "25000",
+        "max_write_iops": "25000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "a2-highgpu-4g",
+        "family": "A2 Standard instances",
+        "family_id": "a2",
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "60000",
+        "max_write_iops": "60000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "a2-highgpu-8g",
+        "family": "A2 Standard instances",
+        "family_id": "a2",
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "100000",
+        "max_write_iops": "100000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "a2-megagpu-16g",
+        "family": "A2 Standard instances",
+        "family_id": "a2",
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "100000",
+        "max_write_iops": "100000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "a2-highgpu-1g",
+        "family": "A2 Standard instances",
+        "family_id": "a2",
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "5000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "800",
+        "max_write_mibps": "400",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "a2-highgpu-2g",
+        "family": "A2 Standard instances",
+        "family_id": "a2",
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "7500",
+        "max_write_iops": "15000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "400",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "a2-highgpu-4g",
+        "family": "A2 Standard instances",
+        "family_id": "a2",
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "7500",
+        "max_write_iops": "15000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "400",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "a2-highgpu-8g",
+        "family": "A2 Standard instances",
+        "family_id": "a2",
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "7500",
+        "max_write_iops": "15000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "400",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "a2-megagpu-16g",
+        "family": "A2 Standard instances",
+        "family_id": "a2",
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "7500",
+        "max_write_iops": "15000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "400",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "e2-medium",
+        "family": "E2 Instances",
+        "family_id": "e2",
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "12000",
+        "max_write_iops": "10000",
+        "max_read_mibps": "200",
+        "max_write_mibps": "200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "e2-medium",
+        "family": "E2 Instances",
+        "family_id": "e2",
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "12000",
+        "max_write_iops": "10000",
+        "max_read_mibps": "200",
+        "max_write_mibps": "200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "e2-medium",
+        "family": "E2 Instances",
+        "family_id": "e2",
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "1000",
+        "max_write_iops": "10000",
+        "max_read_mibps": "200",
+        "max_write_mibps": "200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "g2-standard-4",
+        "family": "G2 Instances",
+        "family_id": "g2",
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "15000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "240",
+        "max_write_mibps": "240",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "g2-standard-8",
+        "family": "G2 Instances",
+        "family_id": "g2",
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "15000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "800",
+        "max_write_mibps": "800",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "g2-standard-12",
+        "family": "G2 Instances",
+        "family_id": "g2",
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "15000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "800",
+        "max_write_mibps": "800",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "g2-standard-16",
+        "family": "G2 Instances",
+        "family_id": "g2",
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "20000",
+        "max_write_iops": "20000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "g2-standard-24",
+        "family": "G2 Instances",
+        "family_id": "g2",
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "20000",
+        "max_write_iops": "20000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "g2-standard-32",
+        "family": "G2 Instances",
+        "family_id": "g2",
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "50000",
+        "max_write_iops": "50000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "g2-standard-48",
+        "family": "G2 Instances",
+        "family_id": "g2",
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "50000",
+        "max_write_iops": "50000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "g2-standard-96",
+        "family": "G2 Instances",
+        "family_id": "g2",
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "80000",
+        "max_write_iops": "80000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "g2-standard-4",
+        "family": "G2 Instances",
+        "family_id": "g2",
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "15000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "240",
+        "max_write_mibps": "240",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "g2-standard-8",
+        "family": "G2 Instances",
+        "family_id": "g2",
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "15000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "800",
+        "max_write_mibps": "800",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "g2-standard-12",
+        "family": "G2 Instances",
+        "family_id": "g2",
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "15000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "800",
+        "max_write_mibps": "800",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "g2-standard-16",
+        "family": "G2 Instances",
+        "family_id": "g2",
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "25000",
+        "max_write_iops": "25000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "g2-standard-24",
+        "family": "G2 Instances",
+        "family_id": "g2",
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "25000",
+        "max_write_iops": "25000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "g2-standard-32",
+        "family": "G2 Instances",
+        "family_id": "g2",
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "60000",
+        "max_write_iops": "60000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "g2-standard-48",
+        "family": "G2 Instances",
+        "family_id": "g2",
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "60000",
+        "max_write_iops": "60000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "g2-standard-96",
+        "family": "G2 Instances",
+        "family_id": "g2",
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "100000",
+        "max_write_iops": "100000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "n2-standard-64",
+        "family": "N2 Instances",
+        "family_id": "n2",
+        "disk_kind": "pd-extreme",
+        "scope": "zonal",
+        "max_read_iops": "120000",
+        "max_write_iops": "120000",
+        "max_read_mibps": "4000",
+        "max_write_mibps": "3000",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "n2-standard-80",
+        "family": "N2 Instances",
+        "family_id": "n2",
+        "disk_kind": "pd-extreme",
+        "scope": "zonal",
+        "max_read_iops": "120000",
+        "max_write_iops": "120000",
+        "max_read_mibps": "4000",
+        "max_write_mibps": "3000",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "n2-standard-96",
+        "family": "N2 Instances",
+        "family_id": "n2",
+        "disk_kind": "pd-extreme",
+        "scope": "zonal",
+        "max_read_iops": "120000",
+        "max_write_iops": "120000",
+        "max_read_mibps": "4000",
+        "max_write_mibps": "3000",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "n2-standard-128",
+        "family": "N2 Instances",
+        "family_id": "n2",
+        "disk_kind": "pd-extreme",
+        "scope": "zonal",
+        "max_read_iops": "120000",
+        "max_write_iops": "120000",
+        "max_read_mibps": "4000",
+        "max_write_mibps": "3000",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "n2-highmem-64",
+        "family": "N2 Instances",
+        "family_id": "n2",
+        "disk_kind": "pd-extreme",
+        "scope": "zonal",
+        "max_read_iops": "120000",
+        "max_write_iops": "120000",
+        "max_read_mibps": "4000",
+        "max_write_mibps": "3000",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "n2-highmem-80",
+        "family": "N2 Instances",
+        "family_id": "n2",
+        "disk_kind": "pd-extreme",
+        "scope": "zonal",
+        "max_read_iops": "120000",
+        "max_write_iops": "120000",
+        "max_read_mibps": "4000",
+        "max_write_mibps": "3000",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "n2-highmem-96",
+        "family": "N2 Instances",
+        "family_id": "n2",
+        "disk_kind": "pd-extreme",
+        "scope": "zonal",
+        "max_read_iops": "120000",
+        "max_write_iops": "120000",
+        "max_read_mibps": "4000",
+        "max_write_mibps": "3000",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "n2-highmem-128",
+        "family": "N2 Instances",
+        "family_id": "n2",
+        "disk_kind": "pd-extreme",
+        "scope": "zonal",
+        "max_read_iops": "120000",
+        "max_write_iops": "120000",
+        "max_read_mibps": "4000",
+        "max_write_mibps": "3000",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "n2-highcpu-64",
+        "family": "N2 Instances",
+        "family_id": "n2",
+        "disk_kind": "pd-extreme",
+        "scope": "zonal",
+        "max_read_iops": "120000",
+        "max_write_iops": "120000",
+        "max_read_mibps": "4000",
+        "max_write_mibps": "3000",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "n2-highcpu-80",
+        "family": "N2 Instances",
+        "family_id": "n2",
+        "disk_kind": "pd-extreme",
+        "scope": "zonal",
+        "max_read_iops": "120000",
+        "max_write_iops": "120000",
+        "max_read_mibps": "4000",
+        "max_write_mibps": "3000",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "n2-highcpu-96",
+        "family": "N2 Instances",
+        "family_id": "n2",
+        "disk_kind": "pd-extreme",
+        "scope": "zonal",
+        "max_read_iops": "120000",
+        "max_write_iops": "120000",
+        "max_read_mibps": "4000",
+        "max_write_mibps": "3000",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "m1-megamem-96",
+        "family": "M1 Instances",
+        "family_id": "m1",
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "80000",
+        "max_write_iops": "80000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "m1-ultramem-40",
+        "family": "M1 Instances",
+        "family_id": "m1",
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "60000",
+        "max_write_iops": "60000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "m1-ultramem-80",
+        "family": "M1 Instances",
+        "family_id": "m1",
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "70000",
+        "max_write_iops": "70000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "m1-ultramem-160",
+        "family": "M1 Instances",
+        "family_id": "m1",
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "70000",
+        "max_write_iops": "70000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "m1-megamem-96",
+        "family": "M1 Instances",
+        "family_id": "m1",
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "100000",
+        "max_write_iops": "100000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "m1-ultramem-40",
+        "family": "M1 Instances",
+        "family_id": "m1",
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "60000",
+        "max_write_iops": "60000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "m1-ultramem-80",
+        "family": "M1 Instances",
+        "family_id": "m1",
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "70000",
+        "max_write_iops": "70000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "m1-ultramem-160",
+        "family": "M1 Instances",
+        "family_id": "m1",
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "70000",
+        "max_write_iops": "70000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "m1-megamem-96",
+        "family": "M1 Instances",
+        "family_id": "m1",
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "7500",
+        "max_write_iops": "15000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "400",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "m1-ultramem-40",
+        "family": "M1 Instances",
+        "family_id": "m1",
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "7500",
+        "max_write_iops": "15000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "400",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "m1-ultramem-80",
+        "family": "M1 Instances",
+        "family_id": "m1",
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "7500",
+        "max_write_iops": "15000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "400",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "m1-ultramem-160",
+        "family": "M1 Instances",
+        "family_id": "m1",
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "7500",
+        "max_write_iops": "15000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "400",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "m1-megamem-96",
+        "family": "M1 Instances",
+        "family_id": "m1",
+        "disk_kind": "pd-extreme",
+        "scope": "zonal",
+        "max_read_iops": "90000",
+        "max_write_iops": "90000",
+        "max_read_mibps": "2200",
+        "max_write_mibps": "2200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "m2-megamem-416",
+        "family": "M2 Instances",
+        "family_id": "m2",
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "40000",
+        "max_write_iops": "40000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "m2-ultramem-208",
+        "family": "M2 Instances",
+        "family_id": "m2",
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "40000",
+        "max_write_iops": "40000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "m2-ultramem-416",
+        "family": "M2 Instances",
+        "family_id": "m2",
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "40000",
+        "max_write_iops": "40000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "m2-hypermem-416",
+        "family": "M2 Instances",
+        "family_id": "m2",
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "40000",
+        "max_write_iops": "40000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "m2-megamem-416",
+        "family": "M2 Instances",
+        "family_id": "m2",
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "40000",
+        "max_write_iops": "40000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "m2-ultramem-208",
+        "family": "M2 Instances",
+        "family_id": "m2",
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "40000",
+        "max_write_iops": "40000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "m2-ultramem-416",
+        "family": "M2 Instances",
+        "family_id": "m2",
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "40000",
+        "max_write_iops": "40000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "m2-hypermem-416",
+        "family": "M2 Instances",
+        "family_id": "m2",
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "40000",
+        "max_write_iops": "40000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "m2-megamem-416",
+        "family": "M2 Instances",
+        "family_id": "m2",
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "7500",
+        "max_write_iops": "15000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "400",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "m2-ultramem-208",
+        "family": "M2 Instances",
+        "family_id": "m2",
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "7500",
+        "max_write_iops": "15000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "400",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "m2-ultramem-416",
+        "family": "M2 Instances",
+        "family_id": "m2",
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "7500",
+        "max_write_iops": "15000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "400",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "m2-hypermem-416",
+        "family": "M2 Instances",
+        "family_id": "m2",
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "7500",
+        "max_write_iops": "15000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "400",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "m2-megamem-416",
+        "family": "M2 Instances",
+        "family_id": "m2",
+        "disk_kind": "pd-extreme",
+        "scope": "zonal",
+        "max_read_iops": "40000",
+        "max_write_iops": "40000",
+        "max_read_mibps": "2200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "m2-ultramem-208",
+        "family": "M2 Instances",
+        "family_id": "m2",
+        "disk_kind": "pd-extreme",
+        "scope": "zonal",
+        "max_read_iops": "40000",
+        "max_write_iops": "40000",
+        "max_read_mibps": "2200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "m2-ultramem-416",
+        "family": "M2 Instances",
+        "family_id": "m2",
+        "disk_kind": "pd-extreme",
+        "scope": "zonal",
+        "max_read_iops": "40000",
+        "max_write_iops": "40000",
+        "max_read_mibps": "2200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "m2-hypermem-416",
+        "family": "M2 Instances",
+        "family_id": "m2",
+        "disk_kind": "pd-extreme",
+        "scope": "zonal",
+        "max_read_iops": "40000",
+        "max_write_iops": "40000",
+        "max_read_mibps": "2200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "m3-megamem-64",
+        "family": "M3 Instances",
+        "family_id": "m3",
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "40000",
+        "max_write_iops": "40000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "m3-megamem-128",
+        "family": "M3 Instances",
+        "family_id": "m3",
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "80000",
+        "max_write_iops": "80000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "m3-ultramem-32",
+        "family": "M3 Instances",
+        "family_id": "m3",
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "40000",
+        "max_write_iops": "40000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "m3-ultramem-64",
+        "family": "M3 Instances",
+        "family_id": "m3",
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "40000",
+        "max_write_iops": "40000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "m3-ultramem-128",
+        "family": "M3 Instances",
+        "family_id": "m3",
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "80000",
+        "max_write_iops": "80000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "m3-megamem-64",
+        "family": "M3 Instances",
+        "family_id": "m3",
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "40000",
+        "max_write_iops": "40000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "m3-megamem-128",
+        "family": "M3 Instances",
+        "family_id": "m3",
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "80000",
+        "max_write_iops": "80000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "m3-ultramem-32",
+        "family": "M3 Instances",
+        "family_id": "m3",
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "40000",
+        "max_write_iops": "40000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "m3-ultramem-64",
+        "family": "M3 Instances",
+        "family_id": "m3",
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "40000",
+        "max_write_iops": "40000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "m3-ultramem-128",
+        "family": "M3 Instances",
+        "family_id": "m3",
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "80000",
+        "max_write_iops": "80000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "m3-megamem-64",
+        "family": "M3 Instances",
+        "family_id": "m3",
+        "disk_kind": "pd-extreme",
+        "scope": "zonal",
+        "max_read_iops": "40000",
+        "max_write_iops": "40000",
+        "max_read_mibps": "2200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "m3-megamem-128",
+        "family": "M3 Instances",
+        "family_id": "m3",
+        "disk_kind": "pd-extreme",
+        "scope": "zonal",
+        "max_read_iops": "80000",
+        "max_write_iops": "80000",
+        "max_read_mibps": "2200",
+        "max_write_mibps": "1700",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "m3-ultramem-32",
+        "family": "M3 Instances",
+        "family_id": "m3",
+        "disk_kind": "pd-extreme",
+        "scope": "zonal",
+        "max_read_iops": "40000",
+        "max_write_iops": "40000",
+        "max_read_mibps": "2200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "m3-ultramem-64",
+        "family": "M3 Instances",
+        "family_id": "m3",
+        "disk_kind": "pd-extreme",
+        "scope": "zonal",
+        "max_read_iops": "40000",
+        "max_write_iops": "40000",
+        "max_read_mibps": "2200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "machine_type": "m3-ultramem-128",
+        "family": "M3 Instances",
+        "family_id": "m3",
+        "disk_kind": "pd-extreme",
+        "scope": "zonal",
+        "max_read_iops": "80000",
+        "max_write_iops": "80000",
+        "max_read_mibps": "2200",
+        "max_write_mibps": "1700",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      }
+    ],
+    "vcpu_limits": [
+      {
+        "family": "C2 instances",
+        "family_id": "c2",
+        "vcpu_label": "4",
+        "vcpus_min": 4,
+        "vcpus_max": 4,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "4000",
+        "max_write_iops": "4000",
+        "max_read_mibps": "240",
+        "max_write_mibps": "240",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C2 instances",
+        "family_id": "c2",
+        "vcpu_label": "8",
+        "vcpus_min": 8,
+        "vcpus_max": 8,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "4000",
+        "max_write_iops": "4000",
+        "max_read_mibps": "240",
+        "max_write_mibps": "240",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C2 instances",
+        "family_id": "c2",
+        "vcpu_label": "16",
+        "vcpus_min": 16,
+        "vcpus_max": 16,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "8000",
+        "max_write_iops": "4000",
+        "max_read_mibps": "600",
+        "max_write_mibps": "480",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C2 instances",
+        "family_id": "c2",
+        "vcpu_label": "30",
+        "vcpus_min": 30,
+        "vcpus_max": 30,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "15000",
+        "max_write_iops": "8000",
+        "max_read_mibps": "600",
+        "max_write_mibps": "480",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C2 instances",
+        "family_id": "c2",
+        "vcpu_label": "60",
+        "vcpus_min": 60,
+        "vcpus_max": 60,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "15000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "800",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C2 instances",
+        "family_id": "c2",
+        "vcpu_label": "4",
+        "vcpus_min": 4,
+        "vcpus_max": 4,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "4000",
+        "max_write_iops": "4000",
+        "max_read_mibps": "240",
+        "max_write_mibps": "240",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C2 instances",
+        "family_id": "c2",
+        "vcpu_label": "8",
+        "vcpus_min": 8,
+        "vcpus_max": 8,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "4000",
+        "max_write_iops": "4000",
+        "max_read_mibps": "240",
+        "max_write_mibps": "240",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C2 instances",
+        "family_id": "c2",
+        "vcpu_label": "16",
+        "vcpus_min": 16,
+        "vcpus_max": 16,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "8000",
+        "max_write_iops": "4000",
+        "max_read_mibps": "600",
+        "max_write_mibps": "480",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C2 instances",
+        "family_id": "c2",
+        "vcpu_label": "30",
+        "vcpus_min": 30,
+        "vcpus_max": 30,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "15000",
+        "max_write_iops": "8000",
+        "max_read_mibps": "600",
+        "max_write_mibps": "480",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C2 instances",
+        "family_id": "c2",
+        "vcpu_label": "60",
+        "vcpus_min": 60,
+        "vcpus_max": 60,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "30000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "800",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C2 instances",
+        "family_id": "c2",
+        "vcpu_label": "4",
+        "vcpus_min": 4,
+        "vcpus_max": 4,
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "3000",
+        "max_write_iops": "4000",
+        "max_read_mibps": "240",
+        "max_write_mibps": "240",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C2 instances",
+        "family_id": "c2",
+        "vcpu_label": "8",
+        "vcpus_min": 8,
+        "vcpus_max": 8,
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "3000",
+        "max_write_iops": "4000",
+        "max_read_mibps": "240",
+        "max_write_mibps": "240",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C2 instances",
+        "family_id": "c2",
+        "vcpu_label": "16",
+        "vcpus_min": 16,
+        "vcpus_max": 16,
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "3000",
+        "max_write_iops": "4000",
+        "max_read_mibps": "240",
+        "max_write_mibps": "240",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C2 instances",
+        "family_id": "c2",
+        "vcpu_label": "30",
+        "vcpus_min": 30,
+        "vcpus_max": 30,
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "3000",
+        "max_write_iops": "8000",
+        "max_read_mibps": "240",
+        "max_write_mibps": "240",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C2 instances",
+        "family_id": "c2",
+        "vcpu_label": "60",
+        "vcpus_min": 60,
+        "vcpus_max": 60,
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "3000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "240",
+        "max_write_mibps": "240",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C2D Instances",
+        "family_id": "c2d",
+        "vcpu_label": "2",
+        "vcpus_min": 2,
+        "vcpus_max": 2,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "4080",
+        "max_write_iops": "4590",
+        "max_read_mibps": "245",
+        "max_write_mibps": "245",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C2D Instances",
+        "family_id": "c2d",
+        "vcpu_label": "4",
+        "vcpus_min": 4,
+        "vcpus_max": 4,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "4080",
+        "max_write_iops": "4590",
+        "max_read_mibps": "245",
+        "max_write_mibps": "245",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C2D Instances",
+        "family_id": "c2d",
+        "vcpu_label": "8",
+        "vcpus_min": 8,
+        "vcpus_max": 8,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "4080",
+        "max_write_iops": "4590",
+        "max_read_mibps": "245",
+        "max_write_mibps": "245",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C2D Instances",
+        "family_id": "c2d",
+        "vcpu_label": "16",
+        "vcpus_min": 16,
+        "vcpus_max": 16,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "8160",
+        "max_write_iops": "4590",
+        "max_read_mibps": "326",
+        "max_write_mibps": "245",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C2D Instances",
+        "family_id": "c2d",
+        "vcpu_label": "32",
+        "vcpus_min": 32,
+        "vcpus_max": 32,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "15300",
+        "max_write_iops": "8160",
+        "max_read_mibps": "612",
+        "max_write_mibps": "245",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C2D Instances",
+        "family_id": "c2d",
+        "vcpu_label": "56",
+        "vcpus_min": 56,
+        "vcpus_max": 56,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "15300",
+        "max_write_iops": "8160",
+        "max_read_mibps": "612",
+        "max_write_mibps": "245",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C2D Instances",
+        "family_id": "c2d",
+        "vcpu_label": "112",
+        "vcpus_min": 112,
+        "vcpus_max": 112,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "30600",
+        "max_write_iops": "15300",
+        "max_read_mibps": "1224",
+        "max_write_mibps": "408",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C2D Instances",
+        "family_id": "c2d",
+        "vcpu_label": "2",
+        "vcpus_min": 2,
+        "vcpus_max": 2,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "4080",
+        "max_write_iops": "4590",
+        "max_read_mibps": "245",
+        "max_write_mibps": "245",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C2D Instances",
+        "family_id": "c2d",
+        "vcpu_label": "4",
+        "vcpus_min": 4,
+        "vcpus_max": 4,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "4080",
+        "max_write_iops": "4590",
+        "max_read_mibps": "245",
+        "max_write_mibps": "245",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C2D Instances",
+        "family_id": "c2d",
+        "vcpu_label": "8",
+        "vcpus_min": 8,
+        "vcpus_max": 8,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "4080",
+        "max_write_iops": "4590",
+        "max_read_mibps": "245",
+        "max_write_mibps": "245",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C2D Instances",
+        "family_id": "c2d",
+        "vcpu_label": "16",
+        "vcpus_min": 16,
+        "vcpus_max": 16,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "8160",
+        "max_write_iops": "4590",
+        "max_read_mibps": "326",
+        "max_write_mibps": "245",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C2D Instances",
+        "family_id": "c2d",
+        "vcpu_label": "32",
+        "vcpus_min": 32,
+        "vcpus_max": 32,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "15300",
+        "max_write_iops": "8160",
+        "max_read_mibps": "612",
+        "max_write_mibps": "245",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C2D Instances",
+        "family_id": "c2d",
+        "vcpu_label": "56",
+        "vcpus_min": 56,
+        "vcpus_max": 56,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "15300",
+        "max_write_iops": "8160",
+        "max_read_mibps": "612",
+        "max_write_mibps": "245",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C2D Instances",
+        "family_id": "c2d",
+        "vcpu_label": "112",
+        "vcpus_min": 112,
+        "vcpus_max": 112,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "30600",
+        "max_write_iops": "15300",
+        "max_read_mibps": "1224",
+        "max_write_mibps": "408",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C2D Instances",
+        "family_id": "c2d",
+        "vcpu_label": "2",
+        "vcpus_min": 2,
+        "vcpus_max": 2,
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "3060",
+        "max_write_iops": "4590",
+        "max_read_mibps": "245",
+        "max_write_mibps": "245",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C2D Instances",
+        "family_id": "c2d",
+        "vcpu_label": "4",
+        "vcpus_min": 4,
+        "vcpus_max": 4,
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "3060",
+        "max_write_iops": "4590",
+        "max_read_mibps": "245",
+        "max_write_mibps": "245",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C2D Instances",
+        "family_id": "c2d",
+        "vcpu_label": "8",
+        "vcpus_min": 8,
+        "vcpus_max": 8,
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "3060",
+        "max_write_iops": "4590",
+        "max_read_mibps": "245",
+        "max_write_mibps": "245",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C2D Instances",
+        "family_id": "c2d",
+        "vcpu_label": "16",
+        "vcpus_min": 16,
+        "vcpus_max": 16,
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "3060",
+        "max_write_iops": "4590",
+        "max_read_mibps": "245",
+        "max_write_mibps": "245",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C2D Instances",
+        "family_id": "c2d",
+        "vcpu_label": "32",
+        "vcpus_min": 32,
+        "vcpus_max": 32,
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "3060",
+        "max_write_iops": "8160",
+        "max_read_mibps": "245",
+        "max_write_mibps": "245",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C2D Instances",
+        "family_id": "c2d",
+        "vcpu_label": "56",
+        "vcpus_min": 56,
+        "vcpus_max": 56,
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "3060",
+        "max_write_iops": "8160",
+        "max_read_mibps": "245",
+        "max_write_mibps": "245",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C2D Instances",
+        "family_id": "c2d",
+        "vcpu_label": "112",
+        "vcpus_min": 112,
+        "vcpus_max": 112,
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "3060",
+        "max_write_iops": "15300",
+        "max_read_mibps": "245",
+        "max_write_mibps": "245",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C3D Instances",
+        "family_id": "c3d",
+        "vcpu_label": "4",
+        "vcpus_min": 4,
+        "vcpus_max": 4,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "15000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "240",
+        "max_write_mibps": "240",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C3D Instances",
+        "family_id": "c3d",
+        "vcpu_label": "8",
+        "vcpus_min": 8,
+        "vcpus_max": 8,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "25000",
+        "max_write_iops": "25000",
+        "max_read_mibps": "800",
+        "max_write_mibps": "800",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C3D Instances",
+        "family_id": "c3d",
+        "vcpu_label": "16",
+        "vcpus_min": 16,
+        "vcpus_max": 16,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "25000",
+        "max_write_iops": "25000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C3D Instances",
+        "family_id": "c3d",
+        "vcpu_label": "30",
+        "vcpus_min": 30,
+        "vcpus_max": 30,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "50000",
+        "max_write_iops": "50000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C3D Instances",
+        "family_id": "c3d",
+        "vcpu_label": "60",
+        "vcpus_min": 60,
+        "vcpus_max": 60,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "80000",
+        "max_write_iops": "80000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C3D Instances",
+        "family_id": "c3d",
+        "vcpu_label": "90",
+        "vcpus_min": 90,
+        "vcpus_max": 90,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "80000",
+        "max_write_iops": "80000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C3D Instances",
+        "family_id": "c3d",
+        "vcpu_label": "180",
+        "vcpus_min": 180,
+        "vcpus_max": 180,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "80000",
+        "max_write_iops": "80000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C3D Instances",
+        "family_id": "c3d",
+        "vcpu_label": "360",
+        "vcpus_min": 360,
+        "vcpus_max": 360,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "80000",
+        "max_write_iops": "80000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C3D Instances",
+        "family_id": "c3d",
+        "vcpu_label": "4",
+        "vcpus_min": 4,
+        "vcpus_max": 4,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "15000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "240",
+        "max_write_mibps": "240",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C3D Instances",
+        "family_id": "c3d",
+        "vcpu_label": "8",
+        "vcpus_min": 8,
+        "vcpus_max": 8,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "15000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "800",
+        "max_write_mibps": "800",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C3D Instances",
+        "family_id": "c3d",
+        "vcpu_label": "16",
+        "vcpus_min": 16,
+        "vcpus_max": 16,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "25000",
+        "max_write_iops": "25000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C3D Instances",
+        "family_id": "c3d",
+        "vcpu_label": "30",
+        "vcpus_min": 30,
+        "vcpus_max": 30,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "60000",
+        "max_write_iops": "60000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C3D Instances",
+        "family_id": "c3d",
+        "vcpu_label": "60",
+        "vcpus_min": 60,
+        "vcpus_max": 60,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "80000",
+        "max_write_iops": "80000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C3D Instances",
+        "family_id": "c3d",
+        "vcpu_label": "90",
+        "vcpus_min": 90,
+        "vcpus_max": 90,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "80000",
+        "max_write_iops": "80000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C3D Instances",
+        "family_id": "c3d",
+        "vcpu_label": "180",
+        "vcpus_min": 180,
+        "vcpus_max": 180,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "80000",
+        "max_write_iops": "80000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C3D Instances",
+        "family_id": "c3d",
+        "vcpu_label": "360",
+        "vcpus_min": 360,
+        "vcpus_max": 360,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "80000",
+        "max_write_iops": "80000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C3 Instances",
+        "family_id": "c3",
+        "vcpu_label": "4",
+        "vcpus_min": 4,
+        "vcpus_max": 4,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "15000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "240",
+        "max_write_mibps": "240",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C3 Instances",
+        "family_id": "c3",
+        "vcpu_label": "8",
+        "vcpus_min": 8,
+        "vcpus_max": 8,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "15000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "240",
+        "max_write_mibps": "240",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C3 Instances",
+        "family_id": "c3",
+        "vcpu_label": "22",
+        "vcpus_min": 22,
+        "vcpus_max": 22,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "20000",
+        "max_write_iops": "20000",
+        "max_read_mibps": "800",
+        "max_write_mibps": "800",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C3 Instances",
+        "family_id": "c3",
+        "vcpu_label": "44",
+        "vcpus_min": 44,
+        "vcpus_max": 44,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "50000",
+        "max_write_iops": "50000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C3 Instances",
+        "family_id": "c3",
+        "vcpu_label": "88",
+        "vcpus_min": 88,
+        "vcpus_max": 88,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "80000",
+        "max_write_iops": "80000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C3 Instances",
+        "family_id": "c3",
+        "vcpu_label": "176",
+        "vcpus_min": 176,
+        "vcpus_max": 176,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "80000",
+        "max_write_iops": "80000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C3 Instances",
+        "family_id": "c3",
+        "vcpu_label": "4",
+        "vcpus_min": 4,
+        "vcpus_max": 4,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "15000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "240",
+        "max_write_mibps": "240",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C3 Instances",
+        "family_id": "c3",
+        "vcpu_label": "8",
+        "vcpus_min": 8,
+        "vcpus_max": 8,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "15000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "240",
+        "max_write_mibps": "240",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C3 Instances",
+        "family_id": "c3",
+        "vcpu_label": "22",
+        "vcpus_min": 22,
+        "vcpus_max": 22,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "25000",
+        "max_write_iops": "25000",
+        "max_read_mibps": "800",
+        "max_write_mibps": "800",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C3 Instances",
+        "family_id": "c3",
+        "vcpu_label": "44",
+        "vcpus_min": 44,
+        "vcpus_max": 44,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "60000",
+        "max_write_iops": "60000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C3 Instances",
+        "family_id": "c3",
+        "vcpu_label": "88",
+        "vcpus_min": 88,
+        "vcpus_max": 88,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "80000",
+        "max_write_iops": "80000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "C3 Instances",
+        "family_id": "c3",
+        "vcpu_label": "176",
+        "vcpus_min": 176,
+        "vcpus_max": 176,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "80000",
+        "max_write_iops": "80000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "E2 Instances",
+        "family_id": "e2",
+        "vcpu_label": "2-7",
+        "vcpus_min": 2,
+        "vcpus_max": 7,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "15000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "240",
+        "max_write_mibps": "240",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "E2 Instances",
+        "family_id": "e2",
+        "vcpu_label": "8-15",
+        "vcpus_min": 8,
+        "vcpus_max": 15,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "15000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "800",
+        "max_write_mibps": "800",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "E2 Instances",
+        "family_id": "e2",
+        "vcpu_label": "16-31",
+        "vcpus_min": 16,
+        "vcpus_max": 31,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "20000",
+        "max_write_iops": "20000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1000",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "E2 Instances",
+        "family_id": "e2",
+        "vcpu_label": "32 or more",
+        "vcpus_min": 32,
+        "vcpus_max": null,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "50000",
+        "max_write_iops": "50000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1000",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "E2 Instances",
+        "family_id": "e2",
+        "vcpu_label": "2-7",
+        "vcpus_min": 2,
+        "vcpus_max": 7,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "15000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "240",
+        "max_write_mibps": "240",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "E2 Instances",
+        "family_id": "e2",
+        "vcpu_label": "8-15",
+        "vcpus_min": 8,
+        "vcpus_max": 15,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "15000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "800",
+        "max_write_mibps": "800",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "E2 Instances",
+        "family_id": "e2",
+        "vcpu_label": "16-31",
+        "vcpus_min": 16,
+        "vcpus_max": 31,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "25000",
+        "max_write_iops": "25000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1000",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "E2 Instances",
+        "family_id": "e2",
+        "vcpu_label": "32 or more",
+        "vcpus_min": 32,
+        "vcpus_max": null,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "60000",
+        "max_write_iops": "60000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1000",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "E2 Instances",
+        "family_id": "e2",
+        "vcpu_label": "2-7",
+        "vcpus_min": 2,
+        "vcpus_max": 7,
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "3000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "240",
+        "max_write_mibps": "240",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "E2 Instances",
+        "family_id": "e2",
+        "vcpu_label": "8-15",
+        "vcpus_min": 8,
+        "vcpus_max": 15,
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "5000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "800",
+        "max_write_mibps": "400",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "E2 Instances",
+        "family_id": "e2",
+        "vcpu_label": "16 or more",
+        "vcpus_min": 16,
+        "vcpus_max": null,
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "7500",
+        "max_write_iops": "15000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "400",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "H3 Instances",
+        "family_id": "h3",
+        "vcpu_label": "88",
+        "vcpus_min": 88,
+        "vcpus_max": 88,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "15000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "240",
+        "max_write_mibps": "240",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "N1 Instances",
+        "family_id": "n1",
+        "vcpu_label": "1",
+        "vcpus_min": 1,
+        "vcpus_max": 1,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "15000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "240",
+        "max_write_mibps": "204",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "N1 Instances",
+        "family_id": "n1",
+        "vcpu_label": "2-7",
+        "vcpus_min": 2,
+        "vcpus_max": 7,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "15000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "240",
+        "max_write_mibps": "240",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "N1 Instances",
+        "family_id": "n1",
+        "vcpu_label": "8-15",
+        "vcpus_min": 8,
+        "vcpus_max": 15,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "15000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "800",
+        "max_write_mibps": "800",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "N1 Instances",
+        "family_id": "n1",
+        "vcpu_label": "16-31",
+        "vcpus_min": 16,
+        "vcpus_max": 31,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "20000",
+        "max_write_iops": "20000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "N1 Instances",
+        "family_id": "n1",
+        "vcpu_label": "32-63",
+        "vcpus_min": 32,
+        "vcpus_max": 63,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "50000",
+        "max_write_iops": "50000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "N1 Instances",
+        "family_id": "n1",
+        "vcpu_label": "64 or more",
+        "vcpus_min": 64,
+        "vcpus_max": null,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "80000",
+        "max_write_iops": "80000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "N1 Instances",
+        "family_id": "n1",
+        "vcpu_label": "1",
+        "vcpus_min": 1,
+        "vcpus_max": 1,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "15000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "240",
+        "max_write_mibps": "204",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "N1 Instances",
+        "family_id": "n1",
+        "vcpu_label": "2-7",
+        "vcpus_min": 2,
+        "vcpus_max": 7,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "15000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "240",
+        "max_write_mibps": "240",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "N1 Instances",
+        "family_id": "n1",
+        "vcpu_label": "8-15",
+        "vcpus_min": 8,
+        "vcpus_max": 15,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "15000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "800",
+        "max_write_mibps": "800",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "N1 Instances",
+        "family_id": "n1",
+        "vcpu_label": "16-31",
+        "vcpus_min": 16,
+        "vcpus_max": 31,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "25000",
+        "max_write_iops": "25000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "N1 Instances",
+        "family_id": "n1",
+        "vcpu_label": "32-63",
+        "vcpus_min": 32,
+        "vcpus_max": 63,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "60000",
+        "max_write_iops": "60000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "N1 Instances",
+        "family_id": "n1",
+        "vcpu_label": "64 or more",
+        "vcpus_min": 64,
+        "vcpus_max": null,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "100000",
+        "max_write_iops": "100000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "N1 Instances",
+        "family_id": "n1",
+        "vcpu_label": "1",
+        "vcpus_min": 1,
+        "vcpus_max": 1,
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "3000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "240",
+        "max_write_mibps": "204",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "N1 Instances",
+        "family_id": "n1",
+        "vcpu_label": "2-7",
+        "vcpus_min": 2,
+        "vcpus_max": 7,
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "3000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "240",
+        "max_write_mibps": "240",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "N1 Instances",
+        "family_id": "n1",
+        "vcpu_label": "8-15",
+        "vcpus_min": 8,
+        "vcpus_max": 15,
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "5000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "800",
+        "max_write_mibps": "400",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "N1 Instances",
+        "family_id": "n1",
+        "vcpu_label": "16 or more",
+        "vcpus_min": 16,
+        "vcpus_max": null,
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "7500",
+        "max_write_iops": "15000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "400",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "N2 Instances",
+        "family_id": "n2",
+        "vcpu_label": "2-7",
+        "vcpus_min": 2,
+        "vcpus_max": 7,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "15000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "240",
+        "max_write_mibps": "240",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "N2 Instances",
+        "family_id": "n2",
+        "vcpu_label": "8-15",
+        "vcpus_min": 8,
+        "vcpus_max": 15,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "15000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "800",
+        "max_write_mibps": "800",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "N2 Instances",
+        "family_id": "n2",
+        "vcpu_label": "16-31",
+        "vcpus_min": 16,
+        "vcpus_max": 31,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "20000",
+        "max_write_iops": "20000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "N2 Instances",
+        "family_id": "n2",
+        "vcpu_label": "32-63",
+        "vcpus_min": 32,
+        "vcpus_max": 63,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "50000",
+        "max_write_iops": "50000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "N2 Instances",
+        "family_id": "n2",
+        "vcpu_label": "64 or more",
+        "vcpus_min": 64,
+        "vcpus_max": null,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "80000",
+        "max_write_iops": "80000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "N2 Instances",
+        "family_id": "n2",
+        "vcpu_label": "2-7",
+        "vcpus_min": 2,
+        "vcpus_max": 7,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "15000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "240",
+        "max_write_mibps": "240",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "N2 Instances",
+        "family_id": "n2",
+        "vcpu_label": "8-15",
+        "vcpus_min": 8,
+        "vcpus_max": 15,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "15000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "800",
+        "max_write_mibps": "800",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "N2 Instances",
+        "family_id": "n2",
+        "vcpu_label": "16-31",
+        "vcpus_min": 16,
+        "vcpus_max": 31,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "25000",
+        "max_write_iops": "25000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "N2 Instances",
+        "family_id": "n2",
+        "vcpu_label": "32-63",
+        "vcpus_min": 32,
+        "vcpus_max": 63,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "60000",
+        "max_write_iops": "60000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "N2 Instances",
+        "family_id": "n2",
+        "vcpu_label": "64 or more",
+        "vcpus_min": 64,
+        "vcpus_max": null,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "100000",
+        "max_write_iops": "100000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "N2 Instances",
+        "family_id": "n2",
+        "vcpu_label": "2-7",
+        "vcpus_min": 2,
+        "vcpus_max": 7,
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "3000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "240",
+        "max_write_mibps": "240",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "N2 Instances",
+        "family_id": "n2",
+        "vcpu_label": "8-15",
+        "vcpus_min": 8,
+        "vcpus_max": 15,
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "5000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "800",
+        "max_write_mibps": "400",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "N2 Instances",
+        "family_id": "n2",
+        "vcpu_label": "16 or more",
+        "vcpus_min": 16,
+        "vcpus_max": null,
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "7500",
+        "max_write_iops": "15000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "400",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "N2D Instances",
+        "family_id": "n2d",
+        "vcpu_label": "2-7",
+        "vcpus_min": 2,
+        "vcpus_max": 7,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "15000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "240",
+        "max_write_mibps": "240",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "N2D Instances",
+        "family_id": "n2d",
+        "vcpu_label": "8-15",
+        "vcpus_min": 8,
+        "vcpus_max": 15,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "15000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "800",
+        "max_write_mibps": "800",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "N2D Instances",
+        "family_id": "n2d",
+        "vcpu_label": "16-31",
+        "vcpus_min": 16,
+        "vcpus_max": 31,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "20000",
+        "max_write_iops": "20000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "N2D Instances",
+        "family_id": "n2d",
+        "vcpu_label": "32-63",
+        "vcpus_min": 32,
+        "vcpus_max": 63,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "50000",
+        "max_write_iops": "50000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "N2D Instances",
+        "family_id": "n2d",
+        "vcpu_label": "64 or more",
+        "vcpus_min": 64,
+        "vcpus_max": null,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "80000",
+        "max_write_iops": "80000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "N2D Instances",
+        "family_id": "n2d",
+        "vcpu_label": "2-7",
+        "vcpus_min": 2,
+        "vcpus_max": 7,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "15000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "240",
+        "max_write_mibps": "240",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "N2D Instances",
+        "family_id": "n2d",
+        "vcpu_label": "8-15",
+        "vcpus_min": 8,
+        "vcpus_max": 15,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "15000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "800",
+        "max_write_mibps": "800",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "N2D Instances",
+        "family_id": "n2d",
+        "vcpu_label": "16-31",
+        "vcpus_min": 16,
+        "vcpus_max": 31,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "25000",
+        "max_write_iops": "25000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "N2D Instances",
+        "family_id": "n2d",
+        "vcpu_label": "32-63",
+        "vcpus_min": 32,
+        "vcpus_max": 63,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "60000",
+        "max_write_iops": "60000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "N2D Instances",
+        "family_id": "n2d",
+        "vcpu_label": "64 or more",
+        "vcpus_min": 64,
+        "vcpus_max": null,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "100000",
+        "max_write_iops": "100000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "N2D Instances",
+        "family_id": "n2d",
+        "vcpu_label": "2-7",
+        "vcpus_min": 2,
+        "vcpus_max": 7,
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "3000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "240",
+        "max_write_mibps": "240",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "N2D Instances",
+        "family_id": "n2d",
+        "vcpu_label": "8-15",
+        "vcpus_min": 8,
+        "vcpus_max": 15,
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "5000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "800",
+        "max_write_mibps": "400",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "N2D Instances",
+        "family_id": "n2d",
+        "vcpu_label": "16 or more",
+        "vcpus_min": 16,
+        "vcpus_max": null,
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "7500",
+        "max_write_iops": "15000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "400",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "T2D Instances",
+        "family_id": "t2d",
+        "vcpu_label": "1",
+        "vcpus_min": 1,
+        "vcpus_max": 1,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "15000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "240",
+        "max_write_mibps": "204",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "T2D Instances",
+        "family_id": "t2d",
+        "vcpu_label": "2-7",
+        "vcpus_min": 2,
+        "vcpus_max": 7,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "15000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "240",
+        "max_write_mibps": "240",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "T2D Instances",
+        "family_id": "t2d",
+        "vcpu_label": "8-15",
+        "vcpus_min": 8,
+        "vcpus_max": 15,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "15000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "800",
+        "max_write_mibps": "800",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "T2D Instances",
+        "family_id": "t2d",
+        "vcpu_label": "16-31",
+        "vcpus_min": 16,
+        "vcpus_max": 31,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "20000",
+        "max_write_iops": "20000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "T2D Instances",
+        "family_id": "t2d",
+        "vcpu_label": "32-60",
+        "vcpus_min": 32,
+        "vcpus_max": 60,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "50000",
+        "max_write_iops": "50000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "T2D Instances",
+        "family_id": "t2d",
+        "vcpu_label": "1",
+        "vcpus_min": 1,
+        "vcpus_max": 1,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "15000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "240",
+        "max_write_mibps": "204",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "T2D Instances",
+        "family_id": "t2d",
+        "vcpu_label": "2-7",
+        "vcpus_min": 2,
+        "vcpus_max": 7,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "15000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "240",
+        "max_write_mibps": "240",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "T2D Instances",
+        "family_id": "t2d",
+        "vcpu_label": "8-15",
+        "vcpus_min": 8,
+        "vcpus_max": 15,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "15000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "800",
+        "max_write_mibps": "800",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "T2D Instances",
+        "family_id": "t2d",
+        "vcpu_label": "16-31",
+        "vcpus_min": 16,
+        "vcpus_max": 31,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "25000",
+        "max_write_iops": "25000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "T2D Instances",
+        "family_id": "t2d",
+        "vcpu_label": "32-60",
+        "vcpus_min": 32,
+        "vcpus_max": 60,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "60000",
+        "max_write_iops": "60000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "T2D Instances",
+        "family_id": "t2d",
+        "vcpu_label": "1",
+        "vcpus_min": 1,
+        "vcpus_max": 1,
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "3000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "240",
+        "max_write_mibps": "204",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "T2D Instances",
+        "family_id": "t2d",
+        "vcpu_label": "2-7",
+        "vcpus_min": 2,
+        "vcpus_max": 7,
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "3000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "240",
+        "max_write_mibps": "240",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "T2D Instances",
+        "family_id": "t2d",
+        "vcpu_label": "8-15",
+        "vcpus_min": 8,
+        "vcpus_max": 15,
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "5000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "800",
+        "max_write_mibps": "400",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "T2D Instances",
+        "family_id": "t2d",
+        "vcpu_label": "16 or more",
+        "vcpus_min": 16,
+        "vcpus_max": null,
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "7500",
+        "max_write_iops": "15000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "400",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "T2A Instances",
+        "family_id": "t2a",
+        "vcpu_label": "1",
+        "vcpus_min": 1,
+        "vcpus_max": 1,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "20000",
+        "max_write_iops": "20000",
+        "max_read_mibps": "240",
+        "max_write_mibps": "204",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "T2A Instances",
+        "family_id": "t2a",
+        "vcpu_label": "2-7",
+        "vcpus_min": 2,
+        "vcpus_max": 7,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "20000",
+        "max_write_iops": "20000",
+        "max_read_mibps": "240",
+        "max_write_mibps": "240",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "T2A Instances",
+        "family_id": "t2a",
+        "vcpu_label": "8-15",
+        "vcpus_min": 8,
+        "vcpus_max": 15,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "25000",
+        "max_write_iops": "25000",
+        "max_read_mibps": "800",
+        "max_write_mibps": "800",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "T2A Instances",
+        "family_id": "t2a",
+        "vcpu_label": "16-31",
+        "vcpus_min": 16,
+        "vcpus_max": 31,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "25000",
+        "max_write_iops": "25000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "T2A Instances",
+        "family_id": "t2a",
+        "vcpu_label": "32-47",
+        "vcpus_min": 32,
+        "vcpus_max": 47,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "60000",
+        "max_write_iops": "60000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "T2A Instances",
+        "family_id": "t2a",
+        "vcpu_label": "48",
+        "vcpus_min": 48,
+        "vcpus_max": 48,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "80000",
+        "max_write_iops": "80000",
+        "max_read_mibps": "1800",
+        "max_write_mibps": "1800",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "T2A Instances",
+        "family_id": "t2a",
+        "vcpu_label": "1",
+        "vcpus_min": 1,
+        "vcpus_max": 1,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "20000",
+        "max_write_iops": "20000",
+        "max_read_mibps": "240",
+        "max_write_mibps": "204",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "T2A Instances",
+        "family_id": "t2a",
+        "vcpu_label": "2-7",
+        "vcpus_min": 2,
+        "vcpus_max": 7,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "20000",
+        "max_write_iops": "20000",
+        "max_read_mibps": "240",
+        "max_write_mibps": "240",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "T2A Instances",
+        "family_id": "t2a",
+        "vcpu_label": "8-15",
+        "vcpus_min": 8,
+        "vcpus_max": 15,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "25000",
+        "max_write_iops": "25000",
+        "max_read_mibps": "800",
+        "max_write_mibps": "800",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "T2A Instances",
+        "family_id": "t2a",
+        "vcpu_label": "16-31",
+        "vcpus_min": 16,
+        "vcpus_max": 31,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "25000",
+        "max_write_iops": "25000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "T2A Instances",
+        "family_id": "t2a",
+        "vcpu_label": "32-47",
+        "vcpus_min": 32,
+        "vcpus_max": 47,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "60000",
+        "max_write_iops": "60000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "T2A Instances",
+        "family_id": "t2a",
+        "vcpu_label": "48",
+        "vcpus_min": 48,
+        "vcpus_max": 48,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "80000",
+        "max_write_iops": "80000",
+        "max_read_mibps": "1800",
+        "max_write_mibps": "1800",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "T2A Instances",
+        "family_id": "t2a",
+        "vcpu_label": "1",
+        "vcpus_min": 1,
+        "vcpus_max": 1,
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "1000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "240",
+        "max_write_mibps": "204",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "T2A Instances",
+        "family_id": "t2a",
+        "vcpu_label": "2-3",
+        "vcpus_min": 2,
+        "vcpus_max": 3,
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "2400",
+        "max_write_iops": "15000",
+        "max_read_mibps": "240",
+        "max_write_mibps": "240",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "T2A Instances",
+        "family_id": "t2a",
+        "vcpu_label": "4-7",
+        "vcpus_min": 4,
+        "vcpus_max": 7,
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "3000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "240",
+        "max_write_mibps": "240",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "T2A Instances",
+        "family_id": "t2a",
+        "vcpu_label": "8-15",
+        "vcpus_min": 8,
+        "vcpus_max": 15,
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "5000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "800",
+        "max_write_mibps": "400",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "T2A Instances",
+        "family_id": "t2a",
+        "vcpu_label": "16 or more",
+        "vcpus_min": 16,
+        "vcpus_max": null,
+        "disk_kind": "pd-standard",
+        "scope": "zonal",
+        "max_read_iops": "7500",
+        "max_write_iops": "15000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "400",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "Z3 Instances",
+        "family_id": "z3",
+        "vcpu_label": "8 to 14",
+        "vcpus_min": 8,
+        "vcpus_max": 14,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "15000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "240",
+        "max_write_mibps": "240",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "Z3 Instances",
+        "family_id": "z3",
+        "vcpu_label": "22 to 32",
+        "vcpus_min": 22,
+        "vcpus_max": 32,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "20000",
+        "max_write_iops": "20000",
+        "max_read_mibps": "800",
+        "max_write_mibps": "800",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "Z3 Instances",
+        "family_id": "z3",
+        "vcpu_label": "44",
+        "vcpus_min": 44,
+        "vcpus_max": 44,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "50000",
+        "max_write_iops": "50000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "Z3 Instances",
+        "family_id": "z3",
+        "vcpu_label": "88",
+        "vcpus_min": 88,
+        "vcpus_max": 88,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "80000",
+        "max_write_iops": "80000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "Z3 Instances",
+        "family_id": "z3",
+        "vcpu_label": "176",
+        "vcpus_min": 176,
+        "vcpus_max": 176,
+        "disk_kind": "pd-balanced",
+        "scope": "zonal",
+        "max_read_iops": "80000",
+        "max_write_iops": "80000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "Z3 Instances",
+        "family_id": "z3",
+        "vcpu_label": "8 to 14",
+        "vcpus_min": 8,
+        "vcpus_max": 14,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "15000",
+        "max_write_iops": "15000",
+        "max_read_mibps": "240",
+        "max_write_mibps": "240",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "Z3 Instances",
+        "family_id": "z3",
+        "vcpu_label": "22 to 32",
+        "vcpus_min": 22,
+        "vcpus_max": 32,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "25000",
+        "max_write_iops": "25000",
+        "max_read_mibps": "800",
+        "max_write_mibps": "800",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "Z3 Instances",
+        "family_id": "z3",
+        "vcpu_label": "44",
+        "vcpus_min": 44,
+        "vcpus_max": 44,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "60000",
+        "max_write_iops": "60000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "Z3 Instances",
+        "family_id": "z3",
+        "vcpu_label": "88",
+        "vcpus_min": 88,
+        "vcpus_max": 88,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "80000",
+        "max_write_iops": "80000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      },
+      {
+        "family": "Z3 Instances",
+        "family_id": "z3",
+        "vcpu_label": "176",
+        "vcpus_min": 176,
+        "vcpus_max": 176,
+        "disk_kind": "pd-ssd",
+        "scope": "zonal",
+        "max_read_iops": "80000",
+        "max_write_iops": "80000",
+        "max_read_mibps": "1200",
+        "max_write_mibps": "1200",
+        "source": {
+          "url": "https://cloud.google.com/compute/docs/disks/performance#machine-type-disk-limits",
+          "note": "Section 'Persistent Disk performance limits by machine series'."
+        }
+      }
+    ]
+  }
+}

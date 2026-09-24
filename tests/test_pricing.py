@@ -1,0 +1,179 @@
+"""Billing Catalog client and SKU classification tests (no network)."""
+
+from __future__ import annotations
+
+from collections.abc import Mapping
+from decimal import Decimal
+from typing import Any
+
+import pytest
+
+from gcp_opt.errors import ApiAuthError
+from gcp_opt.models import DiskKind, Scope
+from gcp_opt.pricing import (
+    BillingCatalogClient,
+    classify_disk_sku,
+    find_price,
+    money_to_decimal,
+    parse_sku,
+)
+
+
+class FakeTransport:
+    """Returns queued JSON payloads and records the requests it received."""
+
+    def __init__(self, responses: list[dict[str, Any]]) -> None:
+        self._responses = list(responses)
+        self.calls: list[dict[str, Any]] = []
+
+    def get_json(
+        self,
+        url: str,
+        *,
+        params: Mapping[str, str] | None = None,
+        headers: Mapping[str, str] | None = None,
+    ) -> dict[str, Any]:
+        self.calls.append(
+            {"url": url, "params": dict(params or {}), "headers": dict(headers or {})}
+        )
+        if not self._responses:
+            raise AssertionError("FakeTransport ran out of responses")
+        return self._responses.pop(0)
+
+
+def _sku(
+    sku_id: str,
+    description: str,
+    regions: list[str],
+    nanos: int,
+    *,
+    units: str = "0",
+    family: str = "Storage",
+    usage_unit: str = "gibibyte hour",
+) -> dict[str, Any]:
+    return {
+        "skuId": sku_id,
+        "description": description,
+        "category": {
+            "serviceDisplayName": "Compute Engine",
+            "resourceFamily": family,
+            "usageType": "OnDemand",
+        },
+        "serviceRegions": regions,
+        "pricingInfo": [
+            {
+                "currencyCode": "USD",
+                "pricingExpression": {
+                    "usageUnit": usage_unit,
+                    "tieredRates": [
+                        {"startUsageAmount": 0, "unitPrice": {"units": units, "nanos": nanos}}
+                    ],
+                },
+            }
+        ],
+    }
+
+
+def test_money_to_decimal_is_exact() -> None:
+    assert money_to_decimal({"units": "1", "nanos": 500_000_000}) == Decimal("1.5")
+    assert money_to_decimal({"nanos": 136_986}) == Decimal("0.000136986")
+    assert money_to_decimal({}) == Decimal(0)
+
+
+def test_parse_sku_maps_fields() -> None:
+    parsed = parse_sku(_sku("ABC-123", "Balanced PD Capacity", ["us-central1"], 136_986))
+    assert parsed.sku_id == "ABC-123"
+    assert parsed.tiers[0].unit_price == Decimal("0.000136986")
+    assert parsed.service_regions == ("us-central1",)
+    assert parsed.monthly_cost_per_gib() == Decimal("0.000136986") * 730
+
+
+@pytest.mark.parametrize(
+    ("description", "scope", "expected"),
+    [
+        ("Balanced PD Capacity", Scope.ZONAL, DiskKind.PD_BALANCED),
+        ("SSD backed PD Capacity", Scope.ZONAL, DiskKind.PD_SSD),
+        ("Standard PD Capacity", Scope.ZONAL, DiskKind.PD_STANDARD),
+        ("Balanced provisioned space", Scope.ZONAL, DiskKind.PD_BALANCED),
+        ("Regional Balanced PD Capacity", Scope.ZONAL, None),
+        ("Regional Balanced PD Capacity", Scope.REGIONAL, DiskKind.PD_BALANCED),
+        ("Hyperdisk Balanced provisioned space", Scope.ZONAL, DiskKind.HYPERDISK_BALANCED),
+        ("Hyperdisk Throughput provisioned space", Scope.ZONAL, DiskKind.HYPERDISK_THROUGHPUT),
+        ("Hyperdisk Throughput provisioned throughput", Scope.ZONAL, None),
+        ("Balanced PD Snapshot data storage", Scope.ZONAL, None),
+        ("SSD backed PD Capacity (Regional)", Scope.REGIONAL, DiskKind.PD_SSD),
+    ],
+)
+def test_classify_disk_sku(description: str, scope: Scope, expected: DiskKind | None) -> None:
+    assert classify_disk_sku(description, scope) is expected
+
+
+def test_fetch_disk_price_book_filters_and_paginates() -> None:
+    page_one = {
+        "skus": [
+            _sku("BAL", "Balanced PD Capacity", ["us-central1"], 136_986),
+            _sku("GPU", "Nvidia GPU", ["us-central1"], 1, family="Compute"),
+            _sku("SNAP", "Balanced PD Snapshot", ["us-central1"], 5),
+        ],
+        "nextPageToken": "page2",
+    }
+    page_two = {
+        "skus": [
+            _sku("SSD", "SSD backed PD Capacity", ["us-central1"], 232_877),
+            _sku("OTHER-REGION", "Balanced PD Capacity", ["europe-west1"], 136_986),
+        ]
+    }
+    transport = FakeTransport([page_one, page_two])
+    client = BillingCatalogClient(api_key="KEY", transport=transport)
+    book = client.fetch_disk_price_book(region="us-central1")
+
+    assert {sku.sku_id for sku in book.skus} == {"BAL", "SSD"}
+    assert book.region == "us-central1"
+    # Pagination: second request carries the page token and the API key.
+    assert transport.calls[1]["params"]["pageToken"] == "page2"
+    assert transport.calls[0]["params"]["key"] == "KEY"
+
+
+def test_access_token_uses_authorization_header() -> None:
+    transport = FakeTransport([{"skus": [_sku("BAL", "Balanced PD Capacity", ["us-central1"], 1)]}])
+    client = BillingCatalogClient(access_token="TOKEN", transport=transport)
+    client.fetch_disk_price_book(region="us-central1")
+    assert transport.calls[0]["headers"]["Authorization"] == "Bearer TOKEN"
+    assert "key" not in transport.calls[0]["params"]
+
+
+def test_empty_result_raises_auth_error() -> None:
+    transport = FakeTransport([{"skus": []}])
+    client = BillingCatalogClient(api_key="KEY", transport=transport)
+    with pytest.raises(ApiAuthError):
+        client.fetch_disk_price_book(region="us-central1")
+
+
+def test_client_requires_credentials() -> None:
+    with pytest.raises(ValueError, match="api_key or an access_token"):
+        BillingCatalogClient(transport=FakeTransport([]))
+
+
+def test_tiered_standard_price_first_30_gib_free() -> None:
+    raw = _sku("STD", "Standard PD Capacity", ["us-central1"], 54_795)
+    raw["pricingInfo"][0]["pricingExpression"]["tieredRates"] = [
+        {"startUsageAmount": 0, "unitPrice": {"units": "0", "nanos": 0}},
+        {
+            "startUsageAmount": 30,
+            "unitPrice": {"units": "0", "nanos": 54_795},
+        },
+    ]
+    parsed = parse_sku(raw)
+    assert parsed.cost_for(Decimal(30)) == 0
+    assert parsed.cost_for(Decimal(31)) == Decimal("0.000054795") * 730
+    with pytest.raises(ValueError, match="2 price tiers"):
+        parsed.flat_hourly_price()
+
+
+def test_find_price_returns_none_when_absent() -> None:
+    transport = FakeTransport([{"skus": [_sku("BAL", "Balanced PD Capacity", ["us-central1"], 1)]}])
+    book = BillingCatalogClient(api_key="K", transport=transport).fetch_disk_price_book(
+        region="us-central1"
+    )
+    assert find_price(book, DiskKind.PD_BALANCED) is not None
+    assert find_price(book, DiskKind.PD_SSD) is None
