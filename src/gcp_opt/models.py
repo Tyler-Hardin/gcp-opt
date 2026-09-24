@@ -503,6 +503,7 @@ class Objective(StrEnum):
     MAX_DISK_SIZE = "max_disk_size"
     MAX_DISK_READ = "max_disk_read"
     MAX_DISK_WRITE = "max_disk_write"
+    MAX_DISK_BALANCED = "max_disk_balanced"
     MAX_DISK_IOPS = "max_disk_iops"
 
 
@@ -512,6 +513,7 @@ DISK_OBJECTIVES: frozenset[Objective] = frozenset(
         Objective.MAX_DISK_SIZE,
         Objective.MAX_DISK_READ,
         Objective.MAX_DISK_WRITE,
+        Objective.MAX_DISK_BALANCED,
         Objective.MAX_DISK_IOPS,
         Objective.MIN_COST,
     }

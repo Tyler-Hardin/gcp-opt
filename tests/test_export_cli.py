@@ -271,3 +271,55 @@ def test_cli_option_table_shows_ram_and_net(capsys: pytest.CaptureFixture[str]) 
 def test_cli_search_table_shows_ram_and_net(capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["search", "--objective", "max_memory", "-n", "1"]) == 0
     assert _header_of(capsys.readouterr().out)[:3] == ["machine_type", "ram", "net"]
+
+
+def test_cli_machine_prices_env_adds_vm_cost(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    price_file = tmp_path / "prices.json"
+    price_file.write_text(json.dumps({"n2-standard-8": 0.5}), encoding="utf-8")
+    snapshot = tmp_path / "machine_prices.json"
+    assert (
+        main(
+            [
+                "refresh-machine-prices",
+                "--from-file",
+                str(price_file),
+                "--region",
+                "us-central1",
+                "--out",
+                str(snapshot),
+            ]
+        )
+        == 0
+    )
+    monkeypatch.setenv("GCP_OPT_MACHINE_PRICES", str(snapshot))
+    assert (
+        main(
+            [
+                "max-bandwidth",
+                "--budget",
+                "5000",
+                "--min-size",
+                "1TB",
+                "--machine-types",
+                "n2-standard-8",
+                "-n",
+                "1",
+            ]
+        )
+        == 0
+    )
+    out = capsys.readouterr().out
+    assert "machine_and_disk" in out
+    assert "365.00" in out  # 0.5/hour * 730 hours, shown in the vm$ column
+    assert "DISK ONLY" not in out
+
+
+def test_cli_refresh_machine_prices_requires_a_source(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("GCP_BILLING_API_KEY", raising=False)
+    monkeypatch.delenv("GOOGLE_OAUTH_ACCESS_TOKEN", raising=False)
+    assert main(["refresh-machine-prices"]) == 2
+    assert main(["refresh-machine-prices", "--from-billing"]) == 2

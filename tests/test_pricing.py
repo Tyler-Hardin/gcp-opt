@@ -13,6 +13,7 @@ from gcp_opt.models import DiskKind, Scope, SkuRole
 from gcp_opt.pricing import (
     BillingCatalogClient,
     classify_disk_sku,
+    classify_machine_sku,
     classify_sku,
     find_price,
     money_to_decimal,
@@ -237,3 +238,85 @@ def test_price_book_keeps_capacity_and_iops_skus() -> None:
     assert capacity.sku_id == "EX-SPACE"
     assert iops is not None
     assert iops.sku_id == "EX-IOPS"
+
+
+def _instance_sku(
+    description: str, regions: list[str], nanos: int, *, usage: str = "OnDemand"
+) -> dict[str, Any]:
+    raw = _sku("SKU-" + description[:8], description, regions, nanos, family="Compute")
+    raw["category"]["usageType"] = usage
+    return raw
+
+
+@pytest.mark.parametrize(
+    ("description", "known", "expected"),
+    [
+        ("N2 Instance Core running in Americas", {"n2", "n2d"}, ("n2", "core")),
+        ("N2D AMD Instance Core running in Americas", {"n2", "n2d"}, ("n2d", "core")),
+        ("n1 predefined instance ram", {"n1"}, ("n1", "ram")),
+        ("Memory-optimized Instance Ram", {"m1", "m2", "m3"}, ("m1", "ram")),
+        ("Compute optimized core", {"c2"}, ("c2", "core")),
+        ("N2 Custom Instance Core", {"n2"}, None),
+        ("Premium image core", {"n2"}, None),
+        ("N2 Instance Core running in Americas", {"c3"}, None),
+        ("N2 sole tenancy core", {"n2"}, None),
+    ],
+)
+def test_classify_machine_sku(
+    description: str, known: set[str], expected: tuple[str, str] | None
+) -> None:
+    assert classify_machine_sku(description, known) == expected
+
+
+def test_fetch_machine_family_prices() -> None:
+    transport = FakeTransport(
+        [
+            {
+                "skus": [
+                    _instance_sku(
+                        "N2 Instance Core running in Americas", ["us-central1"], 31_611_000
+                    ),
+                    _instance_sku(
+                        "N2 Instance Ram running in Americas", ["us-central1"], 4_237_000
+                    ),
+                    _instance_sku(
+                        "N2D AMD Instance Core running in Americas", ["us-central1"], 27_000_000
+                    ),
+                    _instance_sku("Memory-optimized Instance Core", ["us-central1"], 50_000_000),
+                    _instance_sku(
+                        "N2 Instance Core running in Americas", ["europe-west1"], 35_000_000
+                    ),
+                    _instance_sku("N2 Custom Instance Core", ["us-central1"], 1),
+                    _instance_sku(
+                        "N2 Instance Core running in Americas",
+                        ["us-central1"],
+                        999,
+                        usage="Preemptible",
+                    ),
+                    _instance_sku("Premium image core", ["us-central1"], 1),
+                ]
+            }
+        ]
+    )
+    client = BillingCatalogClient(api_key="K", transport=transport)
+    prices = client.fetch_machine_family_prices(
+        region="us-central1", known_families={"n2", "n2d", "m1", "m2", "m3"}
+    )
+    by_family = {price.family: price for price in prices}
+    assert by_family["n2"].core_hourly_usd == Decimal("0.031611")
+    assert by_family["n2"].ram_gib_hourly_usd == Decimal("0.004237")
+    assert by_family["n2d"].core_hourly_usd == Decimal("0.027")
+    assert by_family["m1"].core_hourly_usd == Decimal("0.05")
+    # 64 vCPU + 64 GiB at n2 rates -> hourly sum, then 730-hour month.
+    assert by_family["n2"].hourly_for(vcpus=64, memory_gib=Decimal(64)) == (
+        Decimal("0.031611") * 64 + Decimal("0.004237") * 64
+    )
+
+
+def test_fetch_machine_family_prices_errors_when_region_absent() -> None:
+    transport = FakeTransport(
+        [{"skus": [_instance_sku("N2 Instance Core", ["europe-west1"], 1)]}]
+    )
+    client = BillingCatalogClient(api_key="K", transport=transport)
+    with pytest.raises(ApiAuthError, match="no VM core/RAM SKUs"):
+        client.fetch_machine_family_prices(region="us-central1", known_families={"n2"})

@@ -16,10 +16,11 @@ from gcp_opt import constants, units
 from gcp_opt.catalog import Catalog
 from gcp_opt.compute import ComputeMachineTypeClient
 from gcp_opt.dataset import Dataset
-from gcp_opt.errors import GcpOptError, InfeasibleTargetError
+from gcp_opt.errors import ApiError, GcpOptError, InfeasibleTargetError
 from gcp_opt.export import candidate_matrix, machine_matrix, write_csv, write_json
 from gcp_opt.models import (
     ConfigOption,
+    CostBasis,
     DiskKind,
     DiskOption,
     MachinePrice,
@@ -37,8 +38,6 @@ from gcp_opt.query import (
     Requirement,
     machine_satisfies,
     rank_configs,
-    top_min_cost_options,
-    top_throughput_options,
 )
 from gcp_opt.snapshot import DATA_DIR, GENERATOR, build_snapshot, write_snapshot
 
@@ -47,6 +46,10 @@ _MACHINE_OBJECTIVES = ("max_vcpus", "max_memory", "max_network")
 
 
 def _load_catalog() -> Catalog:
+    """Load the bundled snapshots, honoring ``GCP_OPT_MACHINE_PRICES`` if set."""
+    override = os.environ.get("GCP_OPT_MACHINE_PRICES")
+    if override:
+        return Catalog(Dataset.load(machine_prices_path=Path(override)))
     return Catalog(Dataset.load_bundled())
 
 
@@ -181,11 +184,15 @@ def _print_options(options: list[DiskOption], catalog: Catalog) -> None:
 def _print_configs(configs: list[ConfigOption]) -> None:
     header = (
         f"{'machine_type':22s} {'ram':>8s} {'net':>6s} {'vcpu':>5s} "
-        f"{'disk':>12s} {'size GiB':>10s} {'provIOPS':>8s} {'$/mo':>9s} {'basis':>17s}"
+        f"{'disk':>12s} {'size GiB':>10s} {'provIOPS':>8s} "
+        f"{'vm$':>9s} {'disk$':>9s} {'$/mo':>9s} {'basis':>16s}"
     )
     print(header)
     print("-" * len(header))
+    disk_only = False
     for config in configs:
+        if config.cost_basis is CostBasis.DISK_ONLY:
+            disk_only = True
         print(
             f"{config.machine.name:22s} {_fmt_terse(config.memory_gb):>8s} "
             f"{_fmt_terse(config.network_egress_gbps):>6s} "
@@ -193,8 +200,10 @@ def _print_configs(configs: list[ConfigOption]) -> None:
             f"{(config.disk_kind.value if config.disk_kind else '-'):>12s} "
             f"{_fmt(config.size_gib, 0):>10s} "
             f"{_fmt(config.disk.provisioned_iops if config.disk else None, 0):>8s} "
+            f"{_fmt(config.machine_monthly_cost_usd):>9s} "
+            f"{_fmt(config.disk_monthly_cost_usd):>9s} "
             f"{_fmt(config.monthly_cost_usd):>9s} "
-            f"{config.cost_basis.value:>17s}"
+            f"{config.cost_basis.value:>16s}"
         )
         if config.disk is not None:
             print(
@@ -203,12 +212,16 @@ def _print_configs(configs: list[ConfigOption]) -> None:
             )
             if config.disk.provisioned_iops is not None:
                 print(
-                    "    price: capacity "
+                    "    disk$: capacity "
                     f"${_fmt(config.disk.capacity_monthly_cost_usd)} + provisioned IOPS "
                     f"${_fmt(config.disk.provisioned_iops_monthly_cost_usd)}"
                 )
-        if config.monthly_cost_usd is not None and config.cost_note:
-            print(f"    cost: {config.cost_note}")
+    if disk_only:
+        print(
+            "\nnote: cost is DISK ONLY -- no machine prices in the snapshot, so the "
+            "vm$ column is empty.\n"
+            "      run `gcp-opt refresh-machine-prices` to price the VM too."
+        )
 
 
 def _option_payload(option: DiskOption) -> dict[str, Any]:
@@ -309,11 +322,12 @@ def cmd_min_cost(args: argparse.Namespace) -> int:
     catalog = _load_catalog()
     machines = _select_machines(catalog, machine_types=args.machine_types, family=args.family)
     try:
-        options = top_min_cost_options(
+        configs = rank_configs(
             catalog,
             machines,
-            requirement=_requirement_from_args(args),
+            objective=Objective.MIN_COST,
             top=args.top,
+            requirement=_requirement_from_args(args),
             region=args.region,
             disk_kinds=_parse_kinds(args.kinds),
             allow_us_list_price=args.allow_us_list_price,
@@ -322,34 +336,42 @@ def cmd_min_cost(args: argparse.Namespace) -> int:
         print(f"infeasible: {error}", file=sys.stderr)
         return 2
     if args.json:
-        print(json.dumps([_option_payload(option) for option in options], indent=2))
+        print(json.dumps([_config_payload(config) for config in configs], indent=2))
     else:
-        _print_options(options, catalog)
+        _print_configs(configs)
     return 0
 
 
 def cmd_max_bandwidth(args: argparse.Namespace) -> int:
     catalog = _load_catalog()
     machines = _select_machines(catalog, machine_types=args.machine_types, family=args.family)
+    objective = {
+        "read": Objective.MAX_DISK_READ,
+        "write": Objective.MAX_DISK_WRITE,
+        "balanced": Objective.MAX_DISK_BALANCED,
+    }[args.metric]
+    requirement = replace(
+        _requirement_from_args(args), max_monthly_cost_usd=Decimal(args.budget)
+    )
     try:
-        options = top_throughput_options(
+        configs = rank_configs(
             catalog,
             machines,
-            budget_usd=Decimal(args.budget),
+            objective=objective,
             top=args.top,
-            metric=args.metric,
+            requirement=requirement,
             region=args.region,
             disk_kinds=_parse_kinds(args.kinds),
             allow_us_list_price=args.allow_us_list_price,
-            requirement=_requirement_from_args(args),
+            budget_usd=Decimal(args.budget),
         )
     except InfeasibleTargetError as error:
         print(f"infeasible: {error}", file=sys.stderr)
         return 2
     if args.json:
-        print(json.dumps([_option_payload(option) for option in options], indent=2))
+        print(json.dumps([_config_payload(config) for config in configs], indent=2))
     else:
-        _print_options(options, catalog)
+        _print_configs(configs)
     return 0
 
 
@@ -499,6 +521,90 @@ def _load_machine_prices(path: Path, region: str) -> list[MachinePrice]:
 def cmd_refresh_machine_prices(args: argparse.Namespace) -> int:
     from datetime import UTC, datetime
 
+    if not args.from_billing and not args.from_file:
+        print("error: provide --from-billing or --from-file", file=sys.stderr)
+        return 2
+    if args.from_billing and args.from_file:
+        print("error: --from-billing and --from-file are mutually exclusive", file=sys.stderr)
+        return 2
+
+    path = Path(args.out) if args.out else DATA_DIR / "machine_prices.json"
+
+    if args.from_billing:
+        api_key = args.api_key or os.environ.get("GCP_BILLING_API_KEY")
+        token = args.access_token or os.environ.get("GOOGLE_OAUTH_ACCESS_TOKEN")
+        if not api_key and not token:
+            print(
+                "error: --from-billing needs --api-key/--access-token "
+                "(or GCP_BILLING_API_KEY / GOOGLE_OAUTH_ACCESS_TOKEN)",
+                file=sys.stderr,
+            )
+            return 2
+        catalog = _load_catalog()
+        families = {
+            info.family for info in catalog.dataset.machine_types.values() if info.family
+        }
+        client = BillingCatalogClient(api_key=api_key, access_token=token)
+        try:
+            family_prices = client.fetch_machine_family_prices(
+                region=args.region, known_families=families, currency_code=args.currency
+            )
+        except ApiError as error:
+            print(f"error: {error}", file=sys.stderr)
+            return 2
+        by_family = {price.family: price for price in family_prices}
+        source = SourceRef(
+            url=(
+                f"{constants.BILLING_CATALOG_BASE_URL}/services/"
+                f"{constants.COMPUTE_ENGINE_SERVICE_ID}/skus"
+            ),
+            note="Live Cloud Billing Catalog: per-family Instance Core + Instance Ram SKUs.",
+        )
+        prices: list[MachinePrice] = []
+        priced_families: set[str] = set()
+        for info in catalog.dataset.machine_types.values():
+            family_price = by_family.get(info.family or "")
+            if family_price is None or info.guest_cpus is None or info.memory_gb is None:
+                continue
+            hourly = family_price.hourly_for(vcpus=info.guest_cpus, memory_gib=info.memory_gb)
+            if hourly is None:
+                continue
+            prices.append(
+                MachinePrice(
+                    machine_type=info.name,
+                    region=args.region,
+                    hourly_usd=hourly,
+                    source=source,
+                )
+            )
+            priced_families.add(family_price.family)
+        if not prices:
+            print(
+                "error: matched core/RAM SKUs but could not price any machine type "
+                "(missing vCPU/memory?); try --from-file",
+                file=sys.stderr,
+            )
+            return 2
+        provenance = Provenance(
+            method=SourceMethod.CLOUD_BILLING_CATALOG,
+            source_url=source.url,
+            retrieved_at=datetime.now(UTC).replace(microsecond=0),
+            generator=GENERATOR,
+            notes=(
+                f"Live Cloud Billing Catalog core/RAM prices for {len(priced_families)} "
+                f"families in {args.region}. Shared-core machines are approximated by "
+                "vCPU x core + GiB x ram."
+            ),
+        )
+        write_snapshot(
+            build_snapshot(prices, kind=SnapshotKind.MACHINE_PRICES, provenance=provenance), path
+        )
+        print(
+            f"wrote {len(prices)} machine prices across {len(priced_families)} families "
+            f"for {args.region} to {path}"
+        )
+        return 0
+
     source_path = Path(args.from_file)
     if not source_path.exists():
         print(f"error: price file not found: {source_path}", file=sys.stderr)
@@ -513,11 +619,10 @@ def cmd_refresh_machine_prices(args: argparse.Namespace) -> int:
         retrieved_at=datetime.now(UTC).replace(microsecond=0),
         generator=GENERATOR,
         notes=(
-            "User-supplied machine prices. To get authoritative regional prices, query "
-            "the Cloud Billing Catalog for Compute 'Instance Core'/'Instance Ram' SKUs."
+            "User-supplied machine prices. To get regional prices directly, use "
+            "`refresh-machine-prices --from-billing`."
         ),
     )
-    path = Path(args.out) if args.out else DATA_DIR / "machine_prices.json"
     write_snapshot(
         build_snapshot(prices, kind=SnapshotKind.MACHINE_PRICES, provenance=provenance), path
     )
@@ -647,10 +752,21 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_mp = sub.add_parser(
         "refresh-machine-prices",
-        help="import a machine-type hourly price list (JSON/CSV) so min-cost includes VMs",
+        help="price machines so cost rankings include the VM (Billing API or a file)",
     )
-    p_mp.add_argument("--from-file", required=True, help="JSON list/mapping or CSV with hourly_usd")
+    p_mp.add_argument(
+        "--from-billing",
+        action="store_true",
+        help="fetch per-family Instance Core/RAM prices from the Cloud Billing Catalog",
+    )
+    p_mp.add_argument(
+        "--from-file",
+        help="import a JSON list/mapping or CSV with hourly_usd instead",
+    )
     p_mp.add_argument("--region", default="us-central1")
+    p_mp.add_argument("--currency", default="USD")
+    p_mp.add_argument("--api-key")
+    p_mp.add_argument("--access-token")
     p_mp.add_argument("--out")
     p_mp.set_defaults(func=cmd_refresh_machine_prices)
 

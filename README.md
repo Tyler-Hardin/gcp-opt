@@ -3,7 +3,7 @@
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/)
 [![mypy: strict](https://img.shields.io/badge/mypy-strict-blue.svg)](https://mypy.readthedocs.io/)
 [![lint: ruff](https://img.shields.io/badge/lint-ruff-261230.svg)](https://docs.astral.sh/ruff/)
-[![tests: 157 passing](https://img.shields.io/badge/tests-157%20passing-brightgreen.svg)](#development)
+[![tests: 172 passing](https://img.shields.io/badge/tests-172%20passing-brightgreen.svg)](#development)
 [![license: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 **Grounded, typed data for a Google Cloud machine + disk configuration optimizer.**
@@ -20,23 +20,32 @@ disk throughput, and cost.
 
 ```console
 $ poetry run gcp-opt min-cost --min-size 10TB --min-read-bandwidth 4GBps
-machine_type                ram    net disk           size GiB provIOPS      $/mo    rIOPS    wIOPS   rMiB/s   wMiB/s vm-bound
-------------------------------------------------------------------------------------------------------------------------------
-n2-highcpu-64                64     32 pd-extreme         9313    15259   2155.97    15259    15259  3814.70  3000.00      yes
+machine_type                ram    net  vcpu         disk   size GiB provIOPS       vm$     disk$      $/mo            basis
+----------------------------------------------------------------------------------------------------------------------------
+n2-highcpu-64                64     32    64   pd-extreme       9313    15259         -   2155.97   2155.97        disk_only
+    disk: rIOPS=15259 wIOPS=15259 rMiB/s=3814.70 wMiB/s=3000.00
+    disk$: capacity $1164.15 + provisioned IOPS $991.82
 
-$ poetry run gcp-opt search --objective max_network --min-memory 512GiB -n 3
+note: cost is DISK ONLY -- no machine prices in the snapshot, so the vm$ column is empty.
+      run `gcp-opt refresh-machine-prices` to price the VM too.
+
+$ poetry run gcp-opt search --objective max_network --min-memory 512GiB -n 2
 objective: max_network
-machine_type                ram    net  vcpu         disk   size GiB provIOPS      $/mo             basis
----------------------------------------------------------------------------------------------------------
-z4d-highmem-384-standardlssd     3024    400   384            -          -        -         -           unknown
-h4d-highmem-192            1488    200   192            -          -        -         -           unknown
-h4d-highmem-192-lssd       1488    200   192            -          -        -         -           unknown
+machine_type                ram    net  vcpu         disk   size GiB provIOPS       vm$     disk$      $/mo            basis
+----------------------------------------------------------------------------------------------------------------------------
+z4d-highmem-384-standardlssd     3024    400   384            -          -        -         -         -         -          unknown
+h4d-highmem-192            1488    200   192            -          -        -         -         -         -          unknown
 ```
 
 Every machine row starts with `machine_type`, `ram` (GiB) and `net` (Gbps egress
 bandwidth). `provIOPS` is the provisioned-IOPS level: `pd-extreme` performance is
 bought, so two rows can share a machine and a disk size yet differ in throughput
 and cost (e.g. 16,000 vs 9,782 provisioned IOPS on the same `pd-extreme` volume).
+`vm$`, `disk$` and `$/mo` break the cost down; `$/mo` is the **pairing total** the
+ranking uses, and `basis` (`machine_and_disk` vs `disk_only`) says whether machine
+prices were available. Populate them with
+[`refresh-machine-prices`](#refreshing-live-data), and the budget constraint then
+covers the VM *plus* its disks.
 
 
 > **What it is not.** This is a *data layer*, not a solver. It ships no optimization
@@ -186,7 +195,7 @@ print(config.machine_type, config.size_gib, config.monthly_cost_usd, config.cost
 | Disk count / total size | `maximum_persistent_disks`, `maximum_total_size_gib` | Compute Engine API (docs fallback) |
 | Disk capacity | `size_gib` | your choice, priced |
 | Disk IOPS / throughput | `read_iops`, `read_mibps`, `write_iops`, `write_mibps` | size-scaled or provisioned |
-| Cost | `monthly_cost_usd` | disk prices always; machine prices optional |
+| Cost | `monthly_cost_usd` | disk prices always; machine prices via `refresh-machine-prices` |
 
 Objectives (`--objective` / `Objective`):
 
@@ -225,7 +234,7 @@ listed on five machines. `-n 1` gives just the best.
 | `export` | Candidate matrix to CSV/JSON (`--machines-only` for machine rows) |
 | `refresh-prices` | Regional disk prices from the Cloud Billing Catalog API |
 | `refresh-machine-types` | Machine shapes from the Compute Engine API |
-| `refresh-machine-prices` | Import a machine hourly-price list (JSON/CSV) |
+| `refresh-machine-prices` | Price machines from the Billing API (`--from-billing`) or a file (`--from-file`) |
 
 Common selection flags on most commands: `--machine-types`, `--family`, `--region`,
 `--kinds`, `--allow-us-list-price`, `--json`.
@@ -348,13 +357,26 @@ poetry run gcp-opt refresh-prices --region southamerica-east1
 export GOOGLE_OAUTH_ACCESS_TOKEN="$(gcloud auth print-access-token)"
 poetry run gcp-opt refresh-machine-types --project my-project
 
-# Machine (instance) prices so min-cost includes the VM, not just the disk
+# Machine (instance) prices, so cost rankings cover the VM + disk pairing.
+# Two ways:
+#   (a) from the Cloud Billing Catalog (per-family Instance Core / Instance Ram)
+poetry run gcp-opt refresh-machine-prices --from-billing \
+    --region us-central1 --access-token "$(gcloud auth print-access-token)"
+#   (b) from your own list: JSON mapping {"n2-standard-8": 0.5} or CSV with hourly_usd
 poetry run gcp-opt refresh-machine-prices --from-file machine_prices.json --region us-central1
 ```
 
-Google's VM pricing page is rendered client-side, so machine prices are imported
-rather than scraped. Until a price list is present, `ConfigOption.cost_basis` is
-`disk_only` and the CLI says so explicitly.
+Machine prices are what make the cost meaningful: without them the `$/mo` column is
+**disk only** and every `basis` reads `disk_only`, which the CLI states explicitly.
+With them, `vm$` is filled in, `basis` becomes `machine_and_disk`, and `max-bandwidth`
+/ `min-cost` rank and budget on the **pairing total** — so a pricey VM pushing a
+10 TB `pd-extreme` disk over budget is correctly rejected.
+
+`--from-billing` matches per-family `Instance Core` / `Instance Ram` SKUs (the same
+shape Apache libcloud's GCE price scraper uses) and reports how many families it
+priced; the catalog's description layout has drifted over time, so if a family comes
+back unpriced, use `--from-file`. Prices can also live outside the package: point
+`GCP_OPT_MACHINE_PRICES` at a snapshot file.
 
 ## Units policy
 
@@ -366,9 +388,12 @@ rather than scraped. Until a price list is present, `ConfigOption.cost_basis` is
 ## Limitations and non-goals
 
 - **No solver.** By design — bring cvxopt, a MILP solver, or a spreadsheet.
-- **Machine prices are optional and not bundled** (see [Refreshing live
-  data](#refreshing-live-data)). Without them, `min_cost` minimizes disk cost and
-  tie-breaks toward the smallest machine that satisfies the constraints.
+- **Machine prices are not bundled** (see [Refreshing live
+  data](#refreshing-live-data)). Populate them and costs become VM + disk pairings;
+  without them `$/mo` is disk-only, `basis` says `disk_only`, and the CLI prints a
+  note so it is never mistaken for a total. `--from-billing` is best-effort against
+  a catalog whose description format has changed over time; `--from-file` is the
+  authoritative path.
 - **Hyperdisk is not modeled.** Its performance is provisioned, not size-scaled,
   and documented separately; asking for it raises `UnmodeledDiskKindError` rather
   than inventing constants. Hyperdisk *prices* are captured.
@@ -385,7 +410,7 @@ rather than scraped. Until a price list is present, `ConfigOption.cost_basis` is
 
 ```bash
 poetry install --with dev
-poetry run pytest          # 157 tests: unit, golden, property-based
+poetry run pytest          # 172 tests: unit, golden, property-based
 poetry run mypy            # strict
 poetry run ruff check .    # lint + import order + docstrings
 ```

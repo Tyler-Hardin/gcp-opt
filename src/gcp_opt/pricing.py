@@ -9,12 +9,14 @@ transport is injected so the client is fully testable offline.
 
 from __future__ import annotations
 
-from collections.abc import Iterator, Mapping
+import re
+from collections.abc import Collection, Iterator, Mapping
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any
 
-from gcp_opt import constants
+from gcp_opt import constants, units
 from gcp_opt.errors import ApiAuthError, ApiError
 from gcp_opt.http import JsonTransport, UrllibJsonTransport
 from gcp_opt.models import (
@@ -240,6 +242,134 @@ class BillingCatalogClient:
                 notes="Live Cloud Billing Catalog v1 prices (undiscounted on-demand).",
             ),
         )
+
+    def fetch_machine_family_prices(
+        self,
+        *,
+        region: str,
+        known_families: Collection[str],
+        currency_code: str = "USD",
+        service_id: str = constants.COMPUTE_ENGINE_SERVICE_ID,
+    ) -> list[MachineFamilyPrice]:
+        """Fetch per-family vCPU-hour and GiB-hour prices for one region.
+
+        The catalog prices a VM as ``<family> instance core`` plus
+        ``<family> instance ram`` SKUs (verified against Apache libcloud's GCE price
+        scraper).  Prices are keyed by the SKU's ``serviceRegions``.
+
+        Raises:
+            ApiAuthError: if no matching SKUs are found for the region.
+        """
+        accumulator: dict[str, dict[str, Decimal]] = {}
+        for raw in self.iter_skus(service_id=service_id, currency_code=currency_code):
+            category = raw.get("category", {})
+            if str(category.get("resourceFamily", "")) != "Compute":
+                continue
+            if str(category.get("usageType", "")) != "OnDemand":
+                continue
+            description = str(raw.get("description", ""))
+            classified = classify_machine_sku(description, known_families)
+            if classified is None:
+                continue
+            if region not in [str(r) for r in raw.get("serviceRegions", [])]:
+                continue
+            family, resource = classified
+            slot = accumulator.setdefault(family, {})
+            if resource in slot:
+                continue  # keep the first match for a family/resource
+            slot[resource] = parse_sku(raw).tiers[0].unit_price
+
+        results = [
+            MachineFamilyPrice(
+                family=family,
+                region=region,
+                core_hourly_usd=values.get("core"),
+                ram_gib_hourly_usd=values.get("ram"),
+            )
+            for family, values in sorted(accumulator.items())
+        ]
+        if not results:
+            raise ApiAuthError(
+                f"no VM core/RAM SKUs matched for region {region!r}; "
+                "check the region name and credentials, or import a price list with "
+                "`refresh-machine-prices --from-file`"
+            )
+        return results
+
+
+@dataclass(frozen=True)
+class MachineFamilyPrice:
+    """Per-family on-demand prices: one vCPU-hour and one GiB-hour."""
+
+    family: str
+    region: str
+    core_hourly_usd: Decimal | None
+    ram_gib_hourly_usd: Decimal | None
+
+    def hourly_for(self, *, vcpus: int, memory_gib: Decimal) -> Decimal | None:
+        """Return the on-demand hourly price for a machine shape, or ``None``."""
+        if self.core_hourly_usd is None or self.ram_gib_hourly_usd is None:
+            return None
+        return self.core_hourly_usd * vcpus + self.ram_gib_hourly_usd * memory_gib
+
+    def monthly_for(self, *, vcpus: int, memory_gib: Decimal) -> Decimal | None:
+        """Return the 730-hour monthly price for a machine shape, or ``None``."""
+        hourly = self.hourly_for(vcpus=vcpus, memory_gib=memory_gib)
+        return hourly * units.HOURS_PER_MONTH if hourly is not None else None
+
+
+#: SKU descriptions that are not plain predefined-instance core/RAM pricing.
+_MACHINE_SKU_EXCLUDES: tuple[str, ...] = (
+    "premium",
+    "custom",
+    "commitment",
+    "spot",
+    "preemptible",
+    "sole tenancy",
+    "license",
+    "image",
+    "microsoft",
+    "windows",
+    "suse",
+    "rhel",
+    "sql",
+)
+
+#: Families whose core/RAM SKUs use a generic rather than family-specific name.
+_GENERIC_FAMILY_ALIASES: dict[str, tuple[str, ...]] = {
+    "m1": ("memory-optimized", "memory optimized"),
+    "m2": ("memory-optimized", "memory optimized"),
+    "m3": ("memory-optimized", "memory optimized"),
+    "c2": ("compute optimized",),
+}
+
+
+def classify_machine_sku(
+    description: str, known_families: Collection[str]
+) -> tuple[str, str] | None:
+    """Map a VM SKU description to ``(family, "core"|"ram")``, or ``None``.
+
+    Tolerant by design because Google's descriptions have varied over time
+    (``"n1 predefined instance core"``, ``"n2 instance core"``,
+    ``"n2d amd instance core"``).  Family tokens are matched on word boundaries so
+    ``n2`` never matches an ``n2d`` SKU.
+    """
+    text = description.lower()
+    if any(marker in text for marker in _MACHINE_SKU_EXCLUDES):
+        return None
+    if re.search(r"\bcore\b", text):
+        resource = "core"
+    elif re.search(r"\bram\b", text):
+        resource = "ram"
+    else:
+        return None
+    for family in sorted(known_families, key=len, reverse=True):
+        if re.search(rf"\b{re.escape(family)}\b", text):
+            return family, resource
+    for family, aliases in _GENERIC_FAMILY_ALIASES.items():
+        if family in known_families and any(alias in text for alias in aliases):
+            return family, resource
+    return None
 
 
 def find_price(

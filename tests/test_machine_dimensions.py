@@ -241,3 +241,63 @@ def test_rank_configs_disk_objective_top_n(catalog: Catalog) -> None:
     assert 1 < len(configs) <= 3
     reads = [config.read_mibps for config in configs]
     assert reads == sorted(reads, reverse=True)  # type: ignore[type-var]
+
+
+def test_disk_objective_budget_accounts_for_vm_cost(catalog: Catalog) -> None:
+    """A pricey VM leaves less budget for the disk, changing the pairing."""
+    machines = ["n2-highcpu-64"]
+    requirement = Requirement.build(min_total_size_gib="10TB")
+    baseline = optimize(
+        catalog,
+        machines,
+        objective=Objective.MAX_DISK_READ,
+        requirement=requirement,
+        budget_usd=3000,
+    )
+    assert baseline.read_mibps == Decimal(4000)  # disk-only budget reaches the ceiling
+
+    price = MachinePrice(
+        machine_type="n2-highcpu-64",
+        region="us-central1",
+        hourly_usd=Decimal("2"),
+        source=SourceRef(url="test://price"),
+    )
+    priced = Catalog(replace(catalog.dataset, machine_prices=(price,)))
+    config = optimize(
+        priced,
+        machines,
+        objective=Objective.MAX_DISK_READ,
+        requirement=requirement,
+        budget_usd=3000,
+    )
+    assert config.cost_basis is CostBasis.MACHINE_AND_DISK
+    assert config.machine_monthly_cost_usd == Decimal("2") * 730
+    assert config.monthly_cost_usd is not None
+    assert config.monthly_cost_usd <= Decimal(3000)
+    assert config.disk is not None
+    # The VM eats budget, so the disk can no longer be provisioned to the ceiling.
+    assert config.read_mibps is not None
+    assert config.read_mibps < baseline.read_mibps
+
+
+def test_rank_configs_disk_budget_totals_vm_and_disk(catalog: Catalog) -> None:
+    price = MachinePrice(
+        machine_type="n2-standard-8",
+        region="us-central1",
+        hourly_usd=Decimal("0.5"),
+        source=SourceRef(url="test://price"),
+    )
+    priced = Catalog(replace(catalog.dataset, machine_prices=(price,)))
+    configs = rank_configs(
+        priced,
+        ["n2-standard-8"],
+        objective=Objective.MAX_DISK_READ,
+        requirement=Requirement.build(min_total_size_gib="1TB"),
+        budget_usd=5000,
+        top=1,
+    )
+    config = configs[0]
+    assert config.disk is not None
+    assert config.disk_monthly_cost_usd is not None
+    assert config.machine_monthly_cost_usd == Decimal(365)
+    assert config.monthly_cost_usd == config.machine_monthly_cost_usd + config.disk_monthly_cost_usd

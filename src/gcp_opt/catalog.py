@@ -274,6 +274,13 @@ class Catalog:
                 return price.hourly_usd
         return None
 
+    def machine_monthly_price(
+        self, machine_type: str, region: str | None = None
+    ) -> Decimal | None:
+        """Return the machine's 730-hour monthly price, or ``None`` if unpriced."""
+        hourly = self.machine_hourly_price(machine_type, region)
+        return hourly * units.HOURS_PER_MONTH if hourly is not None else None
+
     # -- combined configuration options -----------------------------------
     def config_option(
         self,

@@ -309,37 +309,31 @@ def _fits_machine(
 
 
 def _rank_disk_options(
-    scored: list[tuple[Decimal, DiskOption]],
+    scored: list[tuple[Decimal, Decimal, DiskOption]],
     *,
     top: int,
     higher_is_better: bool,
 ) -> list[DiskOption]:
     """Sort, de-duplicate and truncate scored disk options.
 
-    Rows are ordered by score (best first) then by cost.  De-duplication is by
-    *outcome* -- disk kind, size, provisioned IOPS and monthly cost -- so the same
-    disk bought on a different machine does not fill the list with clones; the
-    best-ranked (cheapest) machine for that outcome is the one kept.
+    Each entry is ``(score, total_monthly_cost, option)``.  Rows are ordered by
+    score (best first) then by *total* cost, and de-duplicated by disk outcome
+    (kind, size, provisioned IOPS) so the same disk on another machine does not
+    fill the list with clones -- the cheapest pairing for that outcome wins.
     """
     if higher_is_better:
         ordered = sorted(
-            scored,
-            key=lambda item: (-item[0], item[1].monthly_cost_usd, item[1].machine_type),
+            scored, key=lambda item: (-item[0], item[1], item[2].machine_type)
         )
     else:
         ordered = sorted(
-            scored, key=lambda item: (item[0], -item[1].size_gib, item[1].machine_type)
+            scored, key=lambda item: (item[0], item[1], -item[2].size_gib, item[2].machine_type)
         )
     limit = max(1, top)
     seen: set[tuple[object, ...]] = set()
     results: list[DiskOption] = []
-    for _score, option in ordered:
-        duplicate_key = (
-            option.disk_kind,
-            option.size_gib,
-            option.provisioned_iops,
-            option.monthly_cost_usd,
-        )
+    for _score, _cost, option in ordered:
+        duplicate_key = (option.disk_kind, option.size_gib, option.provisioned_iops)
         if duplicate_key in seen:
             continue
         seen.add(duplicate_key)
@@ -401,7 +395,7 @@ def top_min_cost_options(
     Raises:
         InfeasibleTargetError: if no configuration satisfies the requirement.
     """
-    scored: list[tuple[Decimal, DiskOption]] = []
+    scored: list[tuple[Decimal, Decimal, DiskOption]] = []
     rejections: list[str] = []
 
     for machine_type in machine_types:
@@ -489,7 +483,7 @@ def top_min_cost_options(
                     f"{requirement.max_monthly_cost_usd}"
                 )
                 continue
-            scored.append((total, option))
+            scored.append((total, total, option))
 
     if not scored:
         summary = "; ".join(rejections[:5]) or "no candidates"
@@ -641,7 +635,7 @@ def top_throughput_options(
         min_total_size_gib=max(base.min_total_size_gib, floor.min_total_size_gib),
     )
     min_size = effective.min_total_size_gib
-    scored: list[tuple[Decimal, DiskOption]] = []
+    scored: list[tuple[Decimal, Decimal, DiskOption]] = []
     rejections: list[str] = []
 
     for machine_type in machine_types:
@@ -656,6 +650,12 @@ def top_throughput_options(
                 f"{machine_type}: unknown machine cannot satisfy machine constraints"
             )
             continue
+        # The budget covers the pairing, so the disk gets what the VM leaves over.
+        vm_cost = catalog.machine_monthly_price(machine_type, region) or Decimal(0)
+        machine_budget = budget - vm_cost
+        if machine_budget <= 0:
+            rejections.append(f"{machine_type}: the VM alone exceeds the budget")
+            continue
         for disk_kind in disk_kinds:
             try:
                 model = catalog.disk_model(disk_kind, scope)
@@ -668,7 +668,7 @@ def top_throughput_options(
 
             # Probe several budget points so the ranking shows a frontier, not just
             # the single configuration that spends the entire budget.
-            for level_budget in _spend_levels(budget):
+            for level_budget in _spend_levels(machine_budget):
                 if model.provisioned_iops:
                     option = _provisioned_budget_option(
                         catalog,
@@ -719,7 +719,7 @@ def top_throughput_options(
                         continue
 
                 score = _score(option, metric)
-                scored.append((score, option))
+                scored.append((score, option.monthly_cost_usd + vm_cost, option))
 
     if not scored:
         summary = "; ".join(rejections[:5]) or "no candidates"
@@ -969,6 +969,7 @@ def top_disk_metric_options(
         Objective.MAX_DISK_SIZE: "size",
         Objective.MAX_DISK_READ: "read",
         Objective.MAX_DISK_WRITE: "write",
+        Objective.MAX_DISK_BALANCED: "balanced",
         Objective.MAX_DISK_IOPS: "iops",
     }
     metric = metric_map.get(objective)
@@ -977,7 +978,7 @@ def top_disk_metric_options(
 
     budget = to_decimal(budget_usd)
     base = requirement or Requirement()
-    scored: list[tuple[Decimal, DiskOption]] = []
+    scored: list[tuple[Decimal, Decimal, DiskOption]] = []
     rejections: list[str] = []
 
     for machine_type in machine_types:
@@ -990,6 +991,11 @@ def top_disk_metric_options(
         elif base.machine_required:
             rejections.append(f"{machine_type}: unknown machine cannot satisfy machine constraints")
             continue
+        vm_cost = catalog.machine_monthly_price(machine_type, region) or Decimal(0)
+        machine_budget = budget - vm_cost
+        if machine_budget <= 0:
+            rejections.append(f"{machine_type}: the VM alone exceeds the budget")
+            continue
         for disk_kind in disk_kinds:
             try:
                 model = catalog.disk_model(disk_kind, scope)
@@ -1000,7 +1006,7 @@ def top_disk_metric_options(
                 rejections.append(f"{machine_type}/{disk_kind}: no documented VM disk ceiling")
                 continue
             # Probe several budget points so the ranking shows a frontier.
-            for level_budget in _spend_levels(budget):
+            for level_budget in _spend_levels(machine_budget):
                 try:
                     option = _max_disk_candidate(
                         catalog,
@@ -1021,7 +1027,9 @@ def top_disk_metric_options(
                     continue
                 if option is None:
                     continue
-                scored.append((_disk_metric_value(option, metric), option))
+                scored.append(
+                    (_disk_metric_value(option, metric), option.monthly_cost_usd + vm_cost, option)
+                )
 
     if not scored:
         summary = "; ".join(rejections[:5]) or "no candidates"
