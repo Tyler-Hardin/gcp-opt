@@ -153,15 +153,17 @@ def _requirement_from_args(args: argparse.Namespace) -> Requirement:
 
 def _print_options(options: list[DiskOption]) -> None:
     header = (
-        f"{'machine_type':22s} {'disk':12s} {'size GiB':>12s} {'$/mo':>9s} "
-        f"{'rIOPS':>8s} {'wIOPS':>8s} {'rMiB/s':>8s} {'wMiB/s':>8s} {'vm-bound':>8s}"
+        f"{'machine_type':22s} {'disk':12s} {'size GiB':>12s} {'provIOPS':>9s} "
+        f"{'$/mo':>9s} {'rIOPS':>8s} {'wIOPS':>8s} {'rMiB/s':>8s} {'wMiB/s':>8s} "
+        f"{'vm-bound':>8s}"
     )
     print(header)
     print("-" * len(header))
     for option in options:
         print(
             f"{option.machine_type:22s} {option.disk_kind.value:12s} "
-            f"{_fmt(option.size_gib, 0):>12s} {_fmt(option.monthly_cost_usd):>9s} "
+            f"{_fmt(option.size_gib, 0):>12s} {_fmt(option.provisioned_iops, 0):>9s} "
+            f"{_fmt(option.monthly_cost_usd):>9s} "
             f"{_fmt(option.read_iops, 0):>8s} {_fmt(option.write_iops, 0):>8s} "
             f"{_fmt(option.read_mibps):>8s} {_fmt(option.write_mibps):>8s} "
             f"{'yes' if option.instance_bound else 'no':>8s}"
@@ -171,7 +173,7 @@ def _print_options(options: list[DiskOption]) -> None:
 def _print_configs(configs: list[ConfigOption]) -> None:
     header = (
         f"{'machine_type':22s} {'vcpu':>5s} {'memGiB':>8s} {'netGbps':>7s} "
-        f"{'disk':>12s} {'size GiB':>12s} {'$/mo':>9s} {'basis':>17s}"
+        f"{'disk':>12s} {'size GiB':>12s} {'provIOPS':>9s} {'$/mo':>9s} {'basis':>17s}"
     )
     print(header)
     print("-" * len(header))
@@ -180,7 +182,9 @@ def _print_configs(configs: list[ConfigOption]) -> None:
             f"{config.machine.name:22s} {_fmt_int(config.guest_cpus):>5s} "
             f"{_fmt(config.memory_gb, 1):>8s} {_fmt(config.network_egress_gbps, 1):>7s} "
             f"{(config.disk_kind.value if config.disk_kind else '-'):>12s} "
-            f"{_fmt(config.size_gib, 0):>12s} {_fmt(config.monthly_cost_usd):>9s} "
+            f"{_fmt(config.size_gib, 0):>12s} "
+            f"{_fmt(config.disk.provisioned_iops if config.disk else None, 0):>9s} "
+            f"{_fmt(config.monthly_cost_usd):>9s} "
             f"{config.cost_basis.value:>17s}"
         )
         if config.disk is not None:
@@ -188,6 +192,12 @@ def _print_configs(configs: list[ConfigOption]) -> None:
                 f"    disk: rIOPS={_fmt(config.read_iops, 0)} wIOPS={_fmt(config.write_iops, 0)} "
                 f"rMiB/s={_fmt(config.read_mibps)} wMiB/s={_fmt(config.write_mibps)}"
             )
+            if config.disk.provisioned_iops is not None:
+                print(
+                    "    price: capacity "
+                    f"${_fmt(config.disk.capacity_monthly_cost_usd)} + provisioned IOPS "
+                    f"${_fmt(config.disk.provisioned_iops_monthly_cost_usd)}"
+                )
         if config.monthly_cost_usd is not None and config.cost_note:
             print(f"    cost: {config.cost_note}")
 

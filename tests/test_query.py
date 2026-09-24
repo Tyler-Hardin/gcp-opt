@@ -204,3 +204,26 @@ def test_top_rejects_out_of_range(catalog: Catalog) -> None:
         top=0,
     )
     assert len(options) == 1  # clamped to at least one
+
+
+def test_provisioned_frontier_rows_differ_only_by_iops(catalog: Catalog) -> None:
+    """Two Extreme rows for one machine share everything but provisioned IOPS."""
+    options = top_throughput_options(
+        catalog,
+        ["n2-highcpu-64"],
+        budget_usd=3000,
+        top=3,
+        min_total_size_gib=_TEN_TB_GIB,
+    )
+    assert len(options) >= 2
+    best, second = options[0], options[1]
+    assert (best.machine_type, best.disk_kind, best.size_gib) == (
+        second.machine_type,
+        second.disk_kind,
+        second.size_gib,
+    )
+    assert best.provisioned_iops is not None
+    assert second.provisioned_iops is not None
+    assert best.provisioned_iops > second.provisioned_iops
+    assert best.read_mibps > second.read_mibps
+    assert best.monthly_cost_usd > second.monthly_cost_usd

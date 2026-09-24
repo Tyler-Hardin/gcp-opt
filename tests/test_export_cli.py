@@ -195,3 +195,24 @@ def test_cli_top_flag_limits_results() -> None:
 def test_cli_top_rejects_zero() -> None:
     with pytest.raises(SystemExit):
         main(["min-cost", "--min-size", "10TB", "-n", "0"])
+
+
+def test_cli_table_shows_provisioned_iops(capsys: pytest.CaptureFixture[str]) -> None:
+    assert (
+        main(
+            [
+                "max-bandwidth",
+                "--budget",
+                "3000",
+                "--min-size",
+                "10TB",
+                "--family",
+                "n2",
+                "-n",
+                "2",
+            ]
+        )
+        == 0
+    )
+    out = capsys.readouterr().out
+    assert "provIOPS" in out
