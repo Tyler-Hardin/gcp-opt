@@ -16,6 +16,7 @@ from gcp_opt.query import (
     machine_satisfies,
     min_cost_option,
     optimize,
+    rank_configs,
 )
 
 
@@ -216,3 +217,27 @@ def test_optimize_disk_objective_still_works(catalog: Catalog) -> None:
 def test_best_machine_rejects_bad_objective(catalog: Catalog) -> None:
     with pytest.raises(ValueError, match="not a machine objective"):
         best_machine(catalog, ["n2-standard-8"], objective=Objective.MIN_COST)
+
+
+def test_rank_configs_machine_objective_top_n(catalog: Catalog) -> None:
+    configs = rank_configs(
+        catalog, catalog.machine_names(), objective=Objective.MAX_MEMORY, top=3
+    )
+    assert len(configs) == 3
+    memories = [config.memory_gb for config in configs]
+    assert memories == sorted(memories, reverse=True)  # type: ignore[type-var]
+    assert len({config.machine_type for config in configs}) == 3
+
+
+def test_rank_configs_disk_objective_top_n(catalog: Catalog) -> None:
+    configs = rank_configs(
+        catalog,
+        [name for name in catalog.machine_names() if name.startswith("n2-")],
+        objective=Objective.MAX_DISK_READ,
+        requirement=Requirement.build(min_total_size_gib="10TB"),
+        budget_usd=3000,
+        top=3,
+    )
+    assert 1 < len(configs) <= 3
+    reads = [config.read_mibps for config in configs]
+    assert reads == sorted(reads, reverse=True)  # type: ignore[type-var]

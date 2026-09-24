@@ -3,7 +3,7 @@
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/)
 [![mypy: strict](https://img.shields.io/badge/mypy-strict-blue.svg)](https://mypy.readthedocs.io/)
 [![lint: ruff](https://img.shields.io/badge/lint-ruff-261230.svg)](https://docs.astral.sh/ruff/)
-[![tests: 143 passing](https://img.shields.io/badge/tests-143%20passing-brightgreen.svg)](#development)
+[![tests: 151 passing](https://img.shields.io/badge/tests-151%20passing-brightgreen.svg)](#development)
 [![license: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 **Grounded, typed data for a Google Cloud machine + disk configuration optimizer.**
@@ -110,6 +110,9 @@ python -m gcp_opt search --objective max_disk_read --min-size 10TB --budget 2000
 # Cheapest config meeting targets: 16 vCPU, 1.1 GB/s, 10 TB
 python -m gcp_opt min-cost --min-vcpus 16 --min-size 10TB --min-read-bandwidth 1.1GBps
 
+# Top 3 disk-throughput options under a budget (default is 5)
+python -m gcp_opt max-bandwidth --budget 3000 --min-size 10TB -n 3
+
 # Export a candidate matrix for your own solver
 python -m gcp_opt export --family n2 --sizes 100,500,1000,2000 --out candidates.csv
 python -m gcp_opt export --machines-only --out machines.csv
@@ -181,15 +184,21 @@ Constraints (available on `search`, `min-cost`, `max-bandwidth`, `machines`):
 A `min` constraint rejects machines whose value is unknown (it can't be proven to
 hold); a `max` constraint does not.
 
+`search`, `min-cost` and `max-bandwidth` show the **top N solutions** (`-n/--top`,
+default 5). For disk objectives the ranking is a *cost/performance frontier*:
+several budget points are probed and duplicate outcomes are collapsed, so you see
+distinct options (e.g. more throughput for more money) rather than the same disk
+listed on five machines. `-n 1` gives just the best.
+
 ## CLI reference
 
 | Command | Purpose |
 | --- | --- |
 | `sources` | Provenance of every bundled snapshot |
 | `machines` | List machine shapes; `--sort {name,vcpus,memory,network}` |
-| `search` | Optimize any `--objective` under any constraints |
-| `min-cost` | Cheapest config meeting targets |
-| `max-bandwidth` | Max disk throughput for a `--budget` (`--metric read\|write\|balanced`) |
+| `search` | Optimize any `--objective` under any constraints; `-n/--top N` |
+| `min-cost` | Cheapest configs meeting targets; `-n/--top N` |
+| `max-bandwidth` | Max disk throughput for a `--budget` (`--metric read\|write\|balanced`, `-n/--top N`) |
 | `options` | Priced, performance-bounded disk rows for specific sizes |
 | `export` | Candidate matrix to CSV/JSON (`--machines-only` for machine rows) |
 | `refresh-prices` | Regional disk prices from the Cloud Billing Catalog API |
@@ -354,7 +363,7 @@ rather than scraped. Until a price list is present, `ConfigOption.cost_basis` is
 
 ```bash
 poetry install --with dev
-poetry run pytest          # 143 tests: unit, golden, property-based
+poetry run pytest          # 151 tests: unit, golden, property-based
 poetry run mypy            # strict
 poetry run ruff check .    # lint + import order + docstrings
 ```

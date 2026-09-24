@@ -308,23 +308,90 @@ def _fits_machine(
     return True, None
 
 
-def min_cost_option(
+def _rank_disk_options(
+    scored: list[tuple[Decimal, DiskOption]],
+    *,
+    top: int,
+    higher_is_better: bool,
+) -> list[DiskOption]:
+    """Sort, de-duplicate and truncate scored disk options.
+
+    Rows are ordered by score (best first) then by cost.  De-duplication is by
+    *outcome* -- disk kind, size, provisioned IOPS and monthly cost -- so the same
+    disk bought on a different machine does not fill the list with clones; the
+    best-ranked (cheapest) machine for that outcome is the one kept.
+    """
+    if higher_is_better:
+        ordered = sorted(
+            scored,
+            key=lambda item: (-item[0], item[1].monthly_cost_usd, item[1].machine_type),
+        )
+    else:
+        ordered = sorted(
+            scored, key=lambda item: (item[0], -item[1].size_gib, item[1].machine_type)
+        )
+    limit = max(1, top)
+    seen: set[tuple[object, ...]] = set()
+    results: list[DiskOption] = []
+    for _score, option in ordered:
+        duplicate_key = (
+            option.disk_kind,
+            option.size_gib,
+            option.provisioned_iops,
+            option.monthly_cost_usd,
+        )
+        if duplicate_key in seen:
+            continue
+        seen.add(duplicate_key)
+        results.append(option)
+        if len(results) >= limit:
+            break
+    return results
+
+
+#: Fractions of a budget probed when ranking disk objectives, so the result is a
+#: cost/performance frontier (best first) rather than a single budget-maximal point.
+_SPEND_FRACTIONS: tuple[Decimal, ...] = (
+    Decimal(1),
+    Decimal("0.8"),
+    Decimal("0.6"),
+    Decimal("0.4"),
+    Decimal("0.2"),
+)
+
+
+def _spend_levels(budget: Decimal) -> list[Decimal]:
+    """Budget points to probe, largest first, without duplicates."""
+    levels: list[Decimal] = []
+    for fraction in _SPEND_FRACTIONS:
+        level = budget * fraction
+        if level > 0 and level not in levels:
+            levels.append(level)
+    return levels
+
+
+def top_min_cost_options(
     catalog: Catalog,
     machine_types: list[str],
     *,
     requirement: Requirement,
+    top: int = 5,
     region: str | None = None,
     disk_kinds: tuple[DiskKind, ...] = ALL_MODELED_DISK_KINDS,
     scope: Scope = Scope.ZONAL,
     allow_us_list_price: bool = False,
     require_known_limit: bool = True,
-) -> DiskOption:
-    """Find the cheapest single-instance option meeting every requirement.
+) -> list[DiskOption]:
+    """Return the cheapest distinct configurations meeting every requirement.
+
+    Ranked by total monthly cost (disk plus the machine when a machine price is
+    available), cheapest first.
 
     Args:
         catalog: joined data view.
         machine_types: machine types to consider.
         requirement: capacity/performance/cost targets.
+        top: maximum number of distinct configurations to return.
         region: region for pricing (defaults to the price book's region).
         disk_kinds: disk kinds to consider (defaults to all modeled kinds).
         scope: zonal or regional.
@@ -334,8 +401,7 @@ def min_cost_option(
     Raises:
         InfeasibleTargetError: if no configuration satisfies the requirement.
     """
-    best: DiskOption | None = None
-    best_total = Decimal("Infinity")
+    scored: list[tuple[Decimal, DiskOption]] = []
     rejections: list[str] = []
 
     for machine_type in machine_types:
@@ -423,17 +489,41 @@ def min_cost_option(
                     f"{requirement.max_monthly_cost_usd}"
                 )
                 continue
-            if best is None or total < best_total:
-                best, best_total = option, total
+            scored.append((total, option))
 
-    if best is None:
+    if not scored:
         summary = "; ".join(rejections[:5]) or "no candidates"
         raise InfeasibleTargetError(
             f"no single-instance configuration satisfies the requirement ({summary})",
             target="min_cost_option",
             limit_kind="catalog",
         )
-    return best
+    return _rank_disk_options(scored, top=top, higher_is_better=False)
+
+
+def min_cost_option(
+    catalog: Catalog,
+    machine_types: list[str],
+    *,
+    requirement: Requirement,
+    region: str | None = None,
+    disk_kinds: tuple[DiskKind, ...] = ALL_MODELED_DISK_KINDS,
+    scope: Scope = Scope.ZONAL,
+    allow_us_list_price: bool = False,
+    require_known_limit: bool = True,
+) -> DiskOption:
+    """Return the single cheapest configuration meeting every requirement."""
+    return top_min_cost_options(
+        catalog,
+        machine_types,
+        requirement=requirement,
+        top=1,
+        region=region,
+        disk_kinds=disk_kinds,
+        scope=scope,
+        allow_us_list_price=allow_us_list_price,
+        require_known_limit=require_known_limit,
+    )[0]
 
 
 def _provisioned_budget_option(
@@ -518,11 +608,12 @@ def _provisioned_budget_option(
     return option if option.monthly_cost_usd <= budget else None
 
 
-def max_throughput_option(
+def top_throughput_options(
     catalog: Catalog,
     machine_types: list[str],
     *,
     budget_usd: DecimalLike,
+    top: int = 5,
     min_total_size_gib: DecimalLike = 0,
     metric: ThroughputMetric = "read",
     region: str | None = None,
@@ -531,8 +622,8 @@ def max_throughput_option(
     allow_us_list_price: bool = False,
     require_known_limit: bool = True,
     requirement: Requirement | None = None,
-) -> DiskOption:
-    """Find the option with the highest throughput within a monthly disk budget.
+) -> list[DiskOption]:
+    """Return the highest-throughput distinct configurations within a budget.
 
     Throughput rises monotonically with size until the VM or disk-type ceiling, so
     each size-scaled candidate takes the largest useful affordable size.  For
@@ -550,8 +641,7 @@ def max_throughput_option(
         min_total_size_gib=max(base.min_total_size_gib, floor.min_total_size_gib),
     )
     min_size = effective.min_total_size_gib
-    best: DiskOption | None = None
-    best_score = Decimal(-1)
+    scored: list[tuple[Decimal, DiskOption]] = []
     rejections: list[str] = []
 
     for machine_type in machine_types:
@@ -576,71 +666,100 @@ def max_throughput_option(
                 rejections.append(f"{machine_type}/{disk_kind}: no documented VM disk ceiling")
                 continue
 
-            if model.provisioned_iops:
-                option = _provisioned_budget_option(
-                    catalog,
-                    machine_type,
-                    disk_kind,
-                    model,
-                    effective,
-                    budget=budget,
-                    metric=metric,
-                    region=region,
-                    scope=scope,
-                    allow_us_list_price=allow_us_list_price,
-                )
-                if option is None:
-                    rejections.append(f"{machine_type}/{disk_kind}: no affordable option")
-                    continue
-            else:
-                sku = catalog.price_sku(
-                    disk_kind, region=region, scope=scope, allow_us_list_price=allow_us_list_price
-                )
-                if sku is None:
-                    continue
-                affordable = max_affordable_size(sku, budget)
-                if info is not None and info.maximum_total_size_gib is not None:
-                    affordable = min(affordable, info.maximum_total_size_gib)
-                if affordable < min_size:
-                    rejections.append(
-                        f"{machine_type}/{disk_kind}: affordable {affordable} GiB < "
-                        f"required {min_size} GiB"
+            # Probe several budget points so the ranking shows a frontier, not just
+            # the single configuration that spends the entire budget.
+            for level_budget in _spend_levels(budget):
+                if model.provisioned_iops:
+                    option = _provisioned_budget_option(
+                        catalog,
+                        machine_type,
+                        disk_kind,
+                        model,
+                        effective,
+                        budget=level_budget,
+                        metric=metric,
+                        region=region,
+                        scope=scope,
+                        allow_us_list_price=allow_us_list_price,
                     )
-                    continue
-                # Throughput stops improving at the saturation size; buy only up to
-                # it (or up to what the budget allows, whichever is smaller).
-                saturation = saturation_size_gib(
-                    model, limit, write=metric == "write", throughput=True
-                )
-                target = max(min_size, saturation) if saturation is not None else min_size
-                size = min(affordable, target)
-                if size < min_size:
-                    continue
-                option = catalog.disk_option(
-                    machine_type,
-                    disk_kind,
-                    size,
-                    region=region,
-                    scope=scope,
-                    allow_us_list_price=allow_us_list_price,
-                )
-                if option.monthly_cost_usd > budget:  # guard against rounding
-                    continue
+                    if option is None:
+                        continue
+                else:
+                    sku = catalog.price_sku(
+                        disk_kind,
+                        region=region,
+                        scope=scope,
+                        allow_us_list_price=allow_us_list_price,
+                    )
+                    if sku is None:
+                        continue
+                    affordable = max_affordable_size(sku, level_budget)
+                    if info is not None and info.maximum_total_size_gib is not None:
+                        affordable = min(affordable, info.maximum_total_size_gib)
+                    if affordable < min_size:
+                        continue
+                    # Throughput stops improving at the saturation size; buy only up
+                    # to it (or up to what the budget allows, whichever is smaller).
+                    saturation = saturation_size_gib(
+                        model, limit, write=metric == "write", throughput=True
+                    )
+                    target = max(min_size, saturation) if saturation is not None else min_size
+                    size = min(affordable, target)
+                    if size < min_size:
+                        continue
+                    option = catalog.disk_option(
+                        machine_type,
+                        disk_kind,
+                        size,
+                        region=region,
+                        scope=scope,
+                        allow_us_list_price=allow_us_list_price,
+                    )
+                    if option.monthly_cost_usd > level_budget:  # guard against rounding
+                        continue
 
-            score = _score(option, metric)
-            if best is None or score > best_score or (
-                score == best_score and option.monthly_cost_usd < best.monthly_cost_usd
-            ):
-                best, best_score = option, score
+                score = _score(option, metric)
+                scored.append((score, option))
 
-    if best is None:
+    if not scored:
         summary = "; ".join(rejections[:5]) or "no candidates"
         raise InfeasibleTargetError(
             f"no configuration fits a ${budget}/month disk budget ({summary})",
             target="max_throughput_option",
             limit_kind="budget",
         )
-    return best
+    return _rank_disk_options(scored, top=top, higher_is_better=True)
+
+
+def max_throughput_option(
+    catalog: Catalog,
+    machine_types: list[str],
+    *,
+    budget_usd: DecimalLike,
+    min_total_size_gib: DecimalLike = 0,
+    metric: ThroughputMetric = "read",
+    region: str | None = None,
+    disk_kinds: tuple[DiskKind, ...] = ALL_MODELED_DISK_KINDS,
+    scope: Scope = Scope.ZONAL,
+    allow_us_list_price: bool = False,
+    require_known_limit: bool = True,
+    requirement: Requirement | None = None,
+) -> DiskOption:
+    """Return the single highest-throughput configuration within a budget."""
+    return top_throughput_options(
+        catalog,
+        machine_types,
+        budget_usd=budget_usd,
+        top=1,
+        min_total_size_gib=min_total_size_gib,
+        metric=metric,
+        region=region,
+        disk_kinds=disk_kinds,
+        scope=scope,
+        allow_us_list_price=allow_us_list_price,
+        require_known_limit=require_known_limit,
+        requirement=requirement,
+    )[0]
 
 
 def _score(option: DiskOption, metric: ThroughputMetric) -> Decimal:
@@ -826,19 +945,20 @@ def _saturation_for(
     return saturation_size_gib(option_model, limit, write=False, throughput=False)
 
 
-def max_disk_metric_option(
+def top_disk_metric_options(
     catalog: Catalog,
     machine_types: list[str],
     *,
     objective: Objective,
     budget_usd: DecimalLike,
+    top: int = 5,
     requirement: Requirement | None = None,
     region: str | None = None,
     disk_kinds: tuple[DiskKind, ...] = ALL_MODELED_DISK_KINDS,
     scope: Scope = Scope.ZONAL,
     allow_us_list_price: bool = False,
     require_known_limit: bool = True,
-) -> DiskOption:
+) -> list[DiskOption]:
     """Maximize one disk axis (size, read/write throughput, IOPS) within a budget.
 
     Raises:
@@ -857,8 +977,7 @@ def max_disk_metric_option(
 
     budget = to_decimal(budget_usd)
     base = requirement or Requirement()
-    best: DiskOption | None = None
-    best_score = Decimal(-1)
+    scored: list[tuple[Decimal, DiskOption]] = []
     rejections: list[str] = []
 
     for machine_type in machine_types:
@@ -880,40 +999,67 @@ def max_disk_metric_option(
             if limit is None and require_known_limit:
                 rejections.append(f"{machine_type}/{disk_kind}: no documented VM disk ceiling")
                 continue
-            try:
-                option = _max_disk_candidate(
-                    catalog,
-                    machine_type,
-                    disk_kind,
-                    model,
-                    limit,
-                    metric=metric,
-                    base=base,
-                    budget=budget,
-                    info=info,
-                    region=region,
-                    scope=scope,
-                    allow_us_list_price=allow_us_list_price,
-                )
-            except (InfeasibleTargetError, PriceUnavailableError) as error:
-                rejections.append(f"{machine_type}/{disk_kind}: {error}")
-                continue
-            if option is None:
-                continue
-            score = _disk_metric_value(option, metric)
-            if best is None or score > best_score or (
-                score == best_score and option.monthly_cost_usd < best.monthly_cost_usd
-            ):
-                best, best_score = option, score
+            # Probe several budget points so the ranking shows a frontier.
+            for level_budget in _spend_levels(budget):
+                try:
+                    option = _max_disk_candidate(
+                        catalog,
+                        machine_type,
+                        disk_kind,
+                        model,
+                        limit,
+                        metric=metric,
+                        base=base,
+                        budget=level_budget,
+                        info=info,
+                        region=region,
+                        scope=scope,
+                        allow_us_list_price=allow_us_list_price,
+                    )
+                except (InfeasibleTargetError, PriceUnavailableError) as error:
+                    rejections.append(f"{machine_type}/{disk_kind}: {error}")
+                    continue
+                if option is None:
+                    continue
+                scored.append((_disk_metric_value(option, metric), option))
 
-    if best is None:
+    if not scored:
         summary = "; ".join(rejections[:5]) or "no candidates"
         raise InfeasibleTargetError(
             f"no configuration fits a ${budget}/month disk budget ({summary})",
             target=f"max_disk_metric:{metric}",
             limit_kind="budget",
         )
-    return best
+    return _rank_disk_options(scored, top=top, higher_is_better=True)
+
+
+def max_disk_metric_option(
+    catalog: Catalog,
+    machine_types: list[str],
+    *,
+    objective: Objective,
+    budget_usd: DecimalLike,
+    requirement: Requirement | None = None,
+    region: str | None = None,
+    disk_kinds: tuple[DiskKind, ...] = ALL_MODELED_DISK_KINDS,
+    scope: Scope = Scope.ZONAL,
+    allow_us_list_price: bool = False,
+    require_known_limit: bool = True,
+) -> DiskOption:
+    """Return the single best configuration for one disk metric objective."""
+    return top_disk_metric_options(
+        catalog,
+        machine_types,
+        objective=objective,
+        budget_usd=budget_usd,
+        top=1,
+        requirement=requirement,
+        region=region,
+        disk_kinds=disk_kinds,
+        scope=scope,
+        allow_us_list_price=allow_us_list_price,
+        require_known_limit=require_known_limit,
+    )[0]
 
 
 def _max_disk_candidate(
@@ -1077,6 +1223,126 @@ def _provisioned_iops_cap(
     return max(read_cap, write_cap)
 
 
+def rank_configs(
+    catalog: Catalog,
+    machine_types: list[str],
+    *,
+    objective: Objective,
+    top: int = 5,
+    requirement: Requirement | None = None,
+    region: str | None = None,
+    disk_kinds: tuple[DiskKind, ...] = ALL_MODELED_DISK_KINDS,
+    scope: Scope = Scope.ZONAL,
+    allow_us_list_price: bool = False,
+    require_known_limit: bool = True,
+    budget_usd: DecimalLike | None = None,
+) -> list[ConfigOption]:
+    """Return up to ``top`` configurations for any objective, best first.
+
+    Machine objectives (``MAX_VCPUS``/``MAX_MEMORY``/``MAX_NETWORK``) rank machines,
+    attaching a disk to each only when the requirement constrains disk axes.  Disk
+    objectives and ``MIN_COST`` rank machine + disk configurations.
+
+    Raises:
+        ValueError: if a disk objective has no budget.
+        InfeasibleTargetError: if nothing satisfies the requirement.
+    """
+    base = requirement or Requirement()
+    effective_budget = (
+        base.max_monthly_cost_usd if base.max_monthly_cost_usd is not None else budget_usd
+    )
+    limit = max(1, top)
+
+    if objective in _MACHINE_OBJECTIVE_METRIC:
+        metric = _MACHINE_OBJECTIVE_METRIC[objective]
+        ordered = sorted(
+            (
+                info
+                for name in machine_types
+                if (info := catalog.machine_info(name)) is not None
+                and machine_satisfies(info, base)[0]
+            ),
+            key=lambda info: _metric_sort_key(info, metric),
+            reverse=True,
+        )
+        results: list[ConfigOption] = []
+        rejections: list[str] = []
+        for info in ordered:
+            if len(results) >= limit:
+                break
+            if not base.disk_required:
+                option = catalog.machine_only_option(info.name, region=region)
+            else:
+                # The best machine on this axis may have no documented disk ceiling;
+                # fall through to the next-best that can host a suitable disk.
+                try:
+                    disk = min_cost_option(
+                        catalog,
+                        [info.name],
+                        requirement=base,
+                        region=region,
+                        disk_kinds=disk_kinds,
+                        scope=scope,
+                        allow_us_list_price=allow_us_list_price,
+                        require_known_limit=require_known_limit,
+                    )
+                except InfeasibleTargetError as error:
+                    rejections.append(f"{info.name}: {error}")
+                    continue
+                hourly = catalog.machine_hourly_price(info.name, region)
+                machine_cost = hourly * HOURS_PER_MONTH if hourly is not None else None
+                option = catalog.assemble_config(
+                    info, disk=disk, machine_monthly_cost_usd=machine_cost
+                )
+            if (
+                base.max_monthly_cost_usd is not None
+                and option.monthly_cost_usd is not None
+                and option.monthly_cost_usd > base.max_monthly_cost_usd
+            ):
+                rejections.append(f"{info.name}: over the monthly budget")
+                continue
+            results.append(option)
+        if not results:
+            summary = "; ".join(rejections[:5]) or "no candidates"
+            raise InfeasibleTargetError(
+                f"no machine satisfies the constraints ({summary})",
+                target=f"rank_configs:{objective}",
+                limit_kind="catalog",
+            )
+        return results
+
+    if objective is Objective.MIN_COST:
+        disks = top_min_cost_options(
+            catalog,
+            machine_types,
+            requirement=base,
+            top=limit,
+            region=region,
+            disk_kinds=disk_kinds,
+            scope=scope,
+            allow_us_list_price=allow_us_list_price,
+            require_known_limit=require_known_limit,
+        )
+        return [catalog.wrap_disk_option(disk) for disk in disks]
+
+    if effective_budget is None:
+        raise ValueError(f"{objective} requires a budget (set max_monthly_cost_usd or budget_usd)")
+    disks = top_disk_metric_options(
+        catalog,
+        machine_types,
+        objective=objective,
+        budget_usd=effective_budget,
+        top=limit,
+        requirement=base,
+        region=region,
+        disk_kinds=disk_kinds,
+        scope=scope,
+        allow_us_list_price=allow_us_list_price,
+        require_known_limit=require_known_limit,
+    )
+    return [catalog.wrap_disk_option(disk) for disk in disks]
+
+
 def optimize(
     catalog: Catalog,
     machine_types: list[str],
@@ -1090,92 +1356,22 @@ def optimize(
     require_known_limit: bool = True,
     budget_usd: DecimalLike | None = None,
 ) -> ConfigOption:
-    """Answer any supported question with one call.
-
-    Machine objectives (``MAX_VCPUS``/``MAX_MEMORY``/``MAX_NETWORK``) return a
-    machine (with a disk attached only if the requirement constrains disk axes).
-    Disk objectives and ``MIN_COST`` return a full machine + disk configuration.
+    """Answer any supported question with one call (the single best configuration).
 
     Raises:
         ValueError: if a disk objective has no budget.
         InfeasibleTargetError: if nothing satisfies the requirement.
     """
-    base = requirement or Requirement()
-    effective_budget = (
-        base.max_monthly_cost_usd if base.max_monthly_cost_usd is not None else budget_usd
-    )
-
-    if objective in _MACHINE_OBJECTIVE_METRIC:
-        if not base.disk_required:
-            return best_machine(
-                catalog, machine_types, objective=objective, requirement=base, region=region
-            )
-        # With a disk required, walk machines best-first and take the first that can
-        # also host a suitable disk (the largest-memory machine may have no
-        # documented disk ceiling at all, for example).
-        metric = _MACHINE_OBJECTIVE_METRIC[objective]
-        ordered = sorted(
-            (
-                info
-                for name in machine_types
-                if (info := catalog.machine_info(name)) is not None
-                and machine_satisfies(info, base)[0]
-            ),
-            key=lambda info: _metric_sort_key(info, metric),
-            reverse=True,
-        )
-        rejections: list[str] = []
-        for info in ordered:
-            try:
-                disk = min_cost_option(
-                    catalog,
-                    [info.name],
-                    requirement=base,
-                    region=region,
-                    disk_kinds=disk_kinds,
-                    scope=scope,
-                    allow_us_list_price=allow_us_list_price,
-                    require_known_limit=require_known_limit,
-                )
-            except InfeasibleTargetError as error:
-                rejections.append(f"{info.name}: {error}")
-                continue
-            hourly = catalog.machine_hourly_price(info.name, region)
-            machine_cost = hourly * HOURS_PER_MONTH if hourly is not None else None
-            return catalog.assemble_config(info, disk=disk, machine_monthly_cost_usd=machine_cost)
-        summary = "; ".join(rejections[:5]) or "no candidates"
-        raise InfeasibleTargetError(
-            f"no machine satisfies both the {objective} objective and the disk "
-            f"requirement ({summary})",
-            target=f"optimize:{objective}",
-            limit_kind="catalog",
-        )
-
-    if objective is Objective.MIN_COST:
-        disk = min_cost_option(
-            catalog,
-            machine_types,
-            requirement=base,
-            region=region,
-            disk_kinds=disk_kinds,
-            scope=scope,
-            allow_us_list_price=allow_us_list_price,
-            require_known_limit=require_known_limit,
-        )
-        return catalog.wrap_disk_option(disk)
-
-    if effective_budget is None:
-        raise ValueError(f"{objective} requires a budget (set max_monthly_cost_usd or budget_usd)")
-    disk = max_disk_metric_option(
+    return rank_configs(
         catalog,
         machine_types,
         objective=objective,
-        budget_usd=effective_budget,
-        requirement=base,
+        top=1,
+        requirement=requirement,
         region=region,
         disk_kinds=disk_kinds,
         scope=scope,
         allow_us_list_price=allow_us_list_price,
         require_known_limit=require_known_limit,
-    )
-    return catalog.wrap_disk_option(disk)
+        budget_usd=budget_usd,
+    )[0]

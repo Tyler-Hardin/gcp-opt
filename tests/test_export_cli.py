@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from gcp_opt.catalog import Catalog
 from gcp_opt.cli import main
 from gcp_opt.export import COLUMNS, NUMERIC_COLUMNS, candidate_matrix, write_csv, write_json
@@ -181,3 +183,15 @@ def test_cli_import_machine_prices(tmp_path: Path) -> None:
         == 0
     )
     assert out.exists()
+
+
+def test_cli_top_flag_limits_results() -> None:
+    assert main(["max-bandwidth", "--budget", "3000", "--min-size", "10TB", "-n", "2"]) == 0
+    assert main(["max-bandwidth", "--budget", "3000", "--min-size", "10TB", "--top", "3"]) == 0
+    assert main(["min-cost", "--min-size", "10TB", "-n", "2"]) == 0
+    assert main(["search", "--objective", "max_memory", "-n", "3"]) == 0
+
+
+def test_cli_top_rejects_zero() -> None:
+    with pytest.raises(SystemExit):
+        main(["min-cost", "--min-size", "10TB", "-n", "0"])

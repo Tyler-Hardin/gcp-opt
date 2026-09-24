@@ -36,9 +36,9 @@ from gcp_opt.query import (
     DEFAULT_DISK_KINDS,
     Requirement,
     machine_satisfies,
-    max_throughput_option,
-    min_cost_option,
-    optimize,
+    rank_configs,
+    top_min_cost_options,
+    top_throughput_options,
 )
 from gcp_opt.snapshot import DATA_DIR, GENERATOR, build_snapshot, write_snapshot
 
@@ -65,6 +65,24 @@ def _parse_kinds(
                 f"unknown disk kind {token!r}; choose from {', '.join(_ALL_KINDS)}"
             ) from error
     return tuple(kinds) or default
+
+
+def _positive_int(value: str) -> int:
+    number = int(value)
+    if number < 1:
+        raise argparse.ArgumentTypeError("must be >= 1")
+    return number
+
+
+def _add_top_flag(p: argparse.ArgumentParser) -> None:
+    p.add_argument(
+        "-n",
+        "--top",
+        type=_positive_int,
+        default=5,
+        metavar="N",
+        help="show the top N solutions (default: %(default)s)",
+    )
 
 
 def _parse_sizes(value: str) -> list[Decimal]:
@@ -271,10 +289,11 @@ def cmd_min_cost(args: argparse.Namespace) -> int:
     catalog = _load_catalog()
     machines = _select_machines(catalog, machine_types=args.machine_types, family=args.family)
     try:
-        option = min_cost_option(
+        options = top_min_cost_options(
             catalog,
             machines,
             requirement=_requirement_from_args(args),
+            top=args.top,
             region=args.region,
             disk_kinds=_parse_kinds(args.kinds),
             allow_us_list_price=args.allow_us_list_price,
@@ -283,9 +302,9 @@ def cmd_min_cost(args: argparse.Namespace) -> int:
         print(f"infeasible: {error}", file=sys.stderr)
         return 2
     if args.json:
-        print(json.dumps(_option_payload(option), indent=2))
+        print(json.dumps([_option_payload(option) for option in options], indent=2))
     else:
-        _print_options([option])
+        _print_options(options)
     return 0
 
 
@@ -293,10 +312,11 @@ def cmd_max_bandwidth(args: argparse.Namespace) -> int:
     catalog = _load_catalog()
     machines = _select_machines(catalog, machine_types=args.machine_types, family=args.family)
     try:
-        option = max_throughput_option(
+        options = top_throughput_options(
             catalog,
             machines,
             budget_usd=Decimal(args.budget),
+            top=args.top,
             metric=args.metric,
             region=args.region,
             disk_kinds=_parse_kinds(args.kinds),
@@ -307,9 +327,9 @@ def cmd_max_bandwidth(args: argparse.Namespace) -> int:
         print(f"infeasible: {error}", file=sys.stderr)
         return 2
     if args.json:
-        print(json.dumps(_option_payload(option), indent=2))
+        print(json.dumps([_option_payload(option) for option in options], indent=2))
     else:
-        _print_options([option])
+        _print_options(options)
     return 0
 
 
@@ -321,10 +341,11 @@ def cmd_search(args: argparse.Namespace) -> int:
     if args.budget:
         requirement = replace(requirement, max_monthly_cost_usd=Decimal(args.budget))
     try:
-        config = optimize(
+        configs = rank_configs(
             catalog,
             machines,
             objective=objective,
+            top=args.top,
             requirement=requirement,
             region=args.region,
             disk_kinds=_parse_kinds(args.kinds),
@@ -335,10 +356,10 @@ def cmd_search(args: argparse.Namespace) -> int:
         print(f"infeasible: {error}", file=sys.stderr)
         return 2
     if args.json:
-        print(json.dumps(_config_payload(config), indent=2))
+        print(json.dumps([_config_payload(config) for config in configs], indent=2))
     else:
         print(f"objective: {objective.value}")
-        _print_configs([config])
+        _print_configs(configs)
     return 0
 
 
@@ -556,6 +577,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="axis to optimize",
     )
     p_search.add_argument("--budget", help="monthly budget in USD (for max_* objectives)")
+    _add_top_flag(p_search)
     p_search.set_defaults(func=cmd_search)
 
     p_options = sub.add_parser("options", help="show priced/performance-bounded disk options")
@@ -564,12 +586,14 @@ def build_parser() -> argparse.ArgumentParser:
     p_options.set_defaults(func=cmd_options)
 
     p_min = sub.add_parser("min-cost", help="cheapest config meeting performance/capacity targets")
+    _add_top_flag(p_min)
     add_selection(p_min, ALL_MODELED_DISK_KINDS)
     p_min.set_defaults(func=cmd_min_cost)
 
     p_bw = sub.add_parser("max-bandwidth", help="max disk throughput subject to a monthly budget")
     p_bw.add_argument("--budget", required=True, help="monthly budget in USD")
     p_bw.add_argument("--metric", choices=("read", "write", "balanced"), default="read")
+    _add_top_flag(p_bw)
     add_selection(p_bw, ALL_MODELED_DISK_KINDS)
     p_bw.set_defaults(func=cmd_max_bandwidth)
 

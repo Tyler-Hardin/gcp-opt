@@ -17,6 +17,8 @@ from gcp_opt.query import (
     min_cost_option,
     min_replicas,
     scale_out,
+    top_min_cost_options,
+    top_throughput_options,
 )
 
 _TEN_TB_GIB = units.tb_to_gib(10)
@@ -146,3 +148,59 @@ def test_scale_out_rejects_zero_replicas(catalog: Catalog) -> None:
     option = catalog.disk_option("n2-standard-8", DiskKind.PD_SSD, 1000)
     with pytest.raises(ValueError, match="replicas must be"):
         scale_out(option, 0)
+
+
+def test_top_throughput_options_returns_a_distinct_frontier(catalog: Catalog) -> None:
+    options = top_throughput_options(
+        catalog,
+        [name for name in catalog.machine_names() if name.startswith("n2-")],
+        budget_usd=3000,
+        top=5,
+        min_total_size_gib=_TEN_TB_GIB,
+    )
+    assert 1 < len(options) <= 5
+    scores = [option.read_mibps for option in options]
+    assert scores == sorted(scores, reverse=True)
+    # Distinct outcomes: no two rows are the same disk at the same cost.
+    keys = {
+        (option.disk_kind, option.size_gib, option.provisioned_iops, option.monthly_cost_usd)
+        for option in options
+    }
+    assert len(keys) == len(options)
+
+
+def test_top_throughput_options_top_one_matches_single_best(catalog: Catalog) -> None:
+    machines = [name for name in catalog.machine_names() if name.startswith("n2-")]
+    single = max_throughput_option(
+        catalog, machines, budget_usd=2000, min_total_size_gib=_TEN_TB_GIB
+    )
+    top = top_throughput_options(
+        catalog, machines, budget_usd=2000, min_total_size_gib=_TEN_TB_GIB, top=1
+    )
+    assert top == [single]
+
+
+def test_top_min_cost_options_sorted_and_distinct(catalog: Catalog) -> None:
+    options = top_min_cost_options(
+        catalog,
+        [name for name in catalog.machine_names() if name.startswith("n2-")],
+        requirement=Requirement.build(
+            min_total_size_gib=_TEN_TB_GIB,
+            min_read_mibps=units.gb_per_s_to_mibps("1.1"),
+        ),
+        top=4,
+    )
+    assert 1 < len(options) <= 4
+    costs = [option.monthly_cost_usd for option in options]
+    assert costs == sorted(costs)
+    assert len({option.disk_kind for option in options}) == len(options)
+
+
+def test_top_rejects_out_of_range(catalog: Catalog) -> None:
+    options = top_min_cost_options(
+        catalog,
+        ["n2-standard-8"],
+        requirement=Requirement.build(min_total_size_gib="1TB"),
+        top=0,
+    )
+    assert len(options) == 1  # clamped to at least one
