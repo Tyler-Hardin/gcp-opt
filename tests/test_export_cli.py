@@ -7,7 +7,7 @@ from pathlib import Path
 
 from gcp_opt.catalog import Catalog
 from gcp_opt.cli import main
-from gcp_opt.export import COLUMNS, candidate_matrix, write_csv, write_json
+from gcp_opt.export import COLUMNS, NUMERIC_COLUMNS, candidate_matrix, write_csv, write_json
 from gcp_opt.models import DiskKind
 
 
@@ -17,15 +17,29 @@ def test_candidate_matrix_shape(catalog: Catalog) -> None:
     assert len(matrix.rows) == 6  # 2 sizes x 3 default disk kinds
     assert all(len(row) == len(COLUMNS) for row in matrix.rows)
     numeric = matrix.numeric_columns()
-    assert set(numeric) == {
-        "monthly_cost_usd",
-        "size_gib",
-        "read_iops",
-        "write_iops",
-        "read_mibps",
-        "write_mibps",
-    }
+    assert set(numeric) == set(NUMERIC_COLUMNS)
     assert numeric["monthly_cost_usd"][1] > numeric["monthly_cost_usd"][0]
+
+
+def test_candidate_matrix_includes_machine_columns(catalog: Catalog) -> None:
+    matrix = candidate_matrix(catalog, ["n2-standard-8"], [100])
+    index = {name: position for position, name in enumerate(matrix.columns)}
+    row = matrix.rows[0]
+    assert row[index["guest_cpus"]] == 8
+    assert row[index["network_egress_gbps"]] == "16"
+    assert row[index["cost_basis"]] == "disk_only"
+    assert row[index["machine_monthly_cost_usd"]] is None
+
+
+def test_machine_matrix(catalog: Catalog) -> None:
+    from gcp_opt.export import machine_matrix
+
+    infos = [catalog.machine_info("n2-standard-8")]
+    matrix = machine_matrix(catalog, [i for i in infos if i is not None])
+    assert len(matrix.rows) == 1
+    index = {name: position for position, name in enumerate(matrix.columns)}
+    assert matrix.rows[0][index["disk_kind"]] is None
+    assert matrix.rows[0][index["guest_cpus"]] == 8
 
 
 def test_candidate_matrix_single_kind(catalog: Catalog) -> None:
@@ -90,3 +104,80 @@ def test_cli_export_writes_file(tmp_path: Path) -> None:
 
 def test_cli_refresh_prices_requires_credentials() -> None:
     assert main(["refresh-prices", "--region", "us-central1"]) == 2
+
+
+def test_cli_machines_lists_shapes() -> None:
+    assert main(["machines", "--machine-types", "n2-standard-8,n2-standard-128"]) == 0
+    assert main(["machines", "--family", "n2", "--sort", "memory"]) == 0
+
+
+def test_cli_search_machine_objectives() -> None:
+    assert main(["search", "--objective", "max_memory"]) == 0
+    assert main(["search", "--objective", "max_network", "--min-memory", "512GiB"]) == 0
+    assert main(["search", "--objective", "max_vcpus", "--family", "n2"]) == 0
+
+
+def test_cli_search_disk_objective() -> None:
+    assert (
+        main(
+            [
+                "search",
+                "--objective",
+                "max_disk_read",
+                "--family",
+                "n2",
+                "--min-size",
+                "10TB",
+                "--budget",
+                "2000",
+            ]
+        )
+        == 0
+    )
+
+
+def test_cli_search_infeasible_returns_2() -> None:
+    assert (
+        main(["search", "--objective", "max_memory", "--min-memory", "99999TiB"]) == 2
+    )
+
+
+def test_cli_export_machines_only(tmp_path: Path) -> None:
+    out = tmp_path / "machines.csv"
+    assert (
+        main(
+            [
+                "export",
+                "--family",
+                "n2",
+                "--machines-only",
+                "--out",
+                str(out),
+            ]
+        )
+        == 0
+    )
+    assert out.exists()
+
+
+def test_cli_import_machine_prices(tmp_path: Path) -> None:
+    price_file = tmp_path / "prices.json"
+    price_file.write_text(
+        json.dumps({"n2-standard-8": 0.5, "n2-standard-4": 0.25}), encoding="utf-8"
+    )
+    out = tmp_path / "machine_prices.json"
+    assert (
+        main(
+            [
+                "refresh-machine-prices",
+                "--from-file",
+                str(price_file),
+                "--region",
+                "us-central1",
+                "--out",
+                str(out),
+            ]
+        )
+        == 0
+    )
+    assert out.exists()

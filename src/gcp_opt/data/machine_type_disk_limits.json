@@ -4,7 +4,7 @@
   "provenance": {
     "method": "google_cloud_docs_scrape",
     "source_url": "https://cloud.google.com/compute/docs/disks/performance",
-    "retrieved_at": "2026-09-24T09:01:05Z",
+    "retrieved_at": "2026-09-24T20:05:21Z",
     "generator": "gcp-opt",
     "notes": "Per-machine-type and per-vCPU Persistent Disk ceilings. The Compute Engine machineTypes API does not expose disk IOPS/throughput, so this table is the authoritative source for the VM bottleneck."
   },

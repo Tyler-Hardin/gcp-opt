@@ -418,7 +418,20 @@ def parse_machine_specs(html: str) -> list[dict[str, object]]:
         if total_size_col is None:
             total_size_col = _find_column(block.headers, "Max total PD size (TiB)")
 
-        if vcpu_col is None and disk_count_col is None and total_size_col is None:
+        # Network egress bandwidth is documented per machine family (the Compute
+        # API's MachineType does not expose it).  Families word this as either
+        # "Default" or "Maximum"; both feed the same field.
+        egress_col = _find_column(block.headers, "Default egress bandwidth (Gbps)")
+        if egress_col is None:
+            egress_col = _find_column(block.headers, "Maximum egress bandwidth (Gbps)")
+        tier1_col = _find_column(block.headers, "Tier_1 egress bandwidth (Gbps)")
+
+        if (
+            vcpu_col is None
+            and disk_count_col is None
+            and total_size_col is None
+            and egress_col is None
+        ):
             continue
 
         for row in block.rows:
@@ -442,4 +455,12 @@ def parse_machine_specs(html: str) -> list[dict[str, object]]:
                 value = parse_number(row[total_size_col])
                 if value is not None:
                     record["maximum_total_size_tib"] = value
+            if egress_col is not None and egress_col < len(row):
+                value = parse_number(row[egress_col])
+                if value is not None:
+                    record["network_egress_gbps"] = value
+            if tier1_col is not None and tier1_col < len(row):
+                value = parse_number(row[tier1_col])
+                if value is not None:
+                    record["network_tier1_egress_gbps"] = value
     return sorted(merged.values(), key=lambda item: str(item["name"]))

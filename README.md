@@ -1,14 +1,23 @@
 # gcp-opt
 
-A typed, sourced, hash-verified data layer for a Google Cloud **Persistent Disk
-cost / performance optimizer**. It fetches live prices and VM machine shapes from
-two official REST APIs, pins the disk-scaling rules that Google only publishes as
-documentation, and joins everything into optimizer-ready rows (cost, read/write
-IOPS, read/write throughput, and *which* layer is the bottleneck).
+A typed, sourced, hash-verified data layer for a Google Cloud **machine + disk
+configuration optimizer**. Every axis is a first-class target you can constrain or
+maximize: **vCPU, memory, network egress bandwidth, disk capacity, disk IOPS, disk
+throughput, and cost**. It fetches live prices and VM machine shapes from two
+official REST APIs, pins the facts Google only publishes as documentation (disk
+scaling rules and per-machine network bandwidth), and joins everything into
+optimizer-ready rows.
 
 It intentionally does **not** ship a solver. The output is a candidate matrix that
-feeds cvxopt / a MILP / a spreadsheet; the two motivating questions are answered
-directly with exact closed-form inversion.
+feeds cvxopt / a MILP / a spreadsheet, and common questions ("max memory", "max
+network", "cheapest config with ≥10 TB and ≥4 GB/s") are answered directly with
+exact closed-form inversion.
+
+```bash
+python -m gcp_opt search --objective max_memory
+python -m gcp_opt search --objective max_network --min-memory 512GiB
+python -m gcp_opt search --objective min_cost --min-vcpus 16 --min-size 10TB --min-read-bandwidth 4GBps
+```
 
 ---
 
@@ -81,29 +90,47 @@ is `provisioned_iops × 256 KiB/s`.
 ```
 src/gcp_opt/
   units.py         exact decimal conversions; GB vs GiB, Gbps vs GBps, 730-hr months
-  models.py        pydantic models (frozen, extra="forbid") + snapshot envelopes
+  models.py        pydantic models: machine shape, disk model, ConfigOption, Objective
   constants.py     the sourced static scaling matrix + SKU matching patterns
   performance.py   pure math: MIN(instance, scaling, type_cap) and its inverse
   pricing.py       Cloud Billing Catalog v1 client + SKU classification
   compute.py       Compute Engine machineTypes client
   http.py          injectable, retrying JSON transport (stdlib only)
   snapshot.py      canonical JSON + SHA-256 integrity checking
-  dataset.py       load the three committed snapshots
-  catalog.py       join models + machine ceilings + prices -> DiskOption rows
-  query.py         min-cost / max-throughput answers, scale-out
-  export.py        candidate matrix -> CSV/JSON for cvxopt/MILP
+  dataset.py       load the committed snapshots (machine prices optional)
+  catalog.py       join machines + disk ceilings + prices -> ConfigOption rows
+  query.py         Requirement (all axes), best_machine(), optimize(objective=...)
+  export.py        machine+disk candidate matrix -> CSV/JSON for cvxopt/MILP
   cli.py           `python -m gcp_opt ...`
   data/*.json      committed, hash-verified snapshots
 tools/
-  doc_parse.py         devsite HTML -> structured records
+  doc_parse.py         devsite HTML -> structured records (disks, bandwidth, prices)
   refresh_snapshots.py regenerate all snapshots from official sources
-tests/                 100+ tests incl. golden checks against Google's tables
+tests/                 140+ tests incl. golden checks against Google's tables
 ```
 
 Everything at rest is `decimal.Decimal` — no binary floats touch money or
 performance. Every snapshot carries provenance (method, source URL, retrieval
 time) and a `payload_sha256` that is re-verified on load; a hand-edited data file
 fails loudly instead of feeding wrong numbers to the optimizer.
+
+### The axes
+
+| Axis | Field | Source |
+| --- | --- | --- |
+| vCPU | `guest_cpus` | Compute API (docs fallback) |
+| Memory | `memory_gb` | Compute API (docs fallback) |
+| Network egress | `network_egress_gbps` / `network_tier1_egress_gbps` | machine family docs |
+| Disk count / total size | `maximum_persistent_disks` / `maximum_total_size_gib` | Compute API (docs fallback) |
+| Disk capacity | `size_gib` | your choice, priced |
+| Disk IOPS / throughput | `read_iops` / `read_mibps` | size-scaled or provisioned |
+| Cost | `monthly_cost_usd` | disk prices always; machine prices optional |
+
+Any axis can be constrained with `min_*`/`max_*` in a `Requirement`, and any axis
+can be the objective passed to `optimize()`. Machine objectives
+(`max_vcpus`, `max_memory`, `max_network`) search machines; disk objectives and
+`min_cost` search machines **and** disks. **Network bandwidth is not exposed by the
+Compute API**, so it comes from the machine-family docs snapshot.
 
 ---
 
@@ -124,46 +151,61 @@ poetry run ruff check .
 # Where did the numbers come from?
 poetry run python -m gcp_opt sources
 
-# Cost + achievable performance for concrete configs
-poetry run python -m gcp_opt options --machine-types n2-standard-8 --sizes 500,1000
+# Machine shapes: vCPU, memory, network, disk ceilings (and $/mo when priced)
+poetry run python -m gcp_opt machines --family n2 --sort memory
 
-# Cheapest config meeting targets ("min 1.1 GB/s and 10 TB")
-poetry run python -m gcp_opt min-cost --min-size 10TB --min-read-bandwidth 1.1GBps --family n2
+# Optimize any axis, subject to any constraints
+poetry run python -m gcp_opt search --objective max_memory
+poetry run python -m gcp_opt search --objective max_network --min-memory 512GiB
+poetry run python -m gcp_opt search --objective max_vcpus --family n2
+poetry run python -m gcp_opt search --objective max_disk_read --min-size 10TB --budget 2000
+
+# Cheapest config meeting targets ("min 16 vCPU, 1.1 GB/s and 10 TB")
+poetry run python -m gcp_opt min-cost --min-vcpus 16 --min-size 10TB --min-read-bandwidth 1.1GBps
 
 # 4 GB/s needs provisioned Extreme PD (min-cost considers it by default)
 poetry run python -m gcp_opt min-cost --min-size 10TB --min-read-bandwidth 4GBps
 
-# Max bandwidth for 10 TB under $2,000/month
-poetry run python -m gcp_opt max-bandwidth --budget 2000 --min-size 10TB --family n2
-
-# Export the candidate matrix for cvxopt / a MILP
+# Export the machine+disk candidate matrix for cvxopt / a MILP
 poetry run python -m gcp_opt export --family n2 --sizes 100,500,1000,2000 --out candidates.csv
+poetry run python -m gcp_opt export --machines-only --out machines.csv
 ```
 
 From Python:
 
 ```python
 from gcp_opt.catalog import load_catalog
-from gcp_opt.models import DiskKind
-from gcp_opt.query import Requirement, min_cost_option
+from gcp_opt.models import Objective
+from gcp_opt.query import Requirement, best_machine, optimize
 
 catalog = load_catalog()
 
-# exactly the "data to feed an optimizer": one joined row
-opt = catalog.disk_option("n2-standard-8", DiskKind.PD_SSD, 1000)
-print(opt.monthly_cost_usd, opt.read_mibps, opt.instance_bound)
+# Machine search: biggest memory that also has >= 10 Gbps network
+best = best_machine(
+    catalog,
+    catalog.machine_names(),
+    objective=Objective.MAX_MEMORY,
+    requirement=Requirement.build(min_network_gbps=10),
+)
+print(best.machine_type, best.memory_gb, best.network_egress_gbps)
 
-# cheapest single-instance answer for a target
-best = min_cost_option(
+# One call answers any axis; constraints span machine and disk
+config = optimize(
     catalog,
     [n for n in catalog.machine_names() if n.startswith("n2-")],
-    requirement=Requirement.build(min_total_size_gib="10TB", min_read_mibps="1.1GBps"),
+    objective=Objective.MIN_COST,
+    requirement=Requirement.build(
+        min_vcpus=16, min_memory_gib="64GiB", min_total_size_gib="10TB", min_read_mibps="1.1GBps"
+    ),
 )
+print(config.machine_type, config.size_gib, config.monthly_cost_usd, config.cost_basis)
 ```
 
-`export.candidate_matrix(...)` returns `(cost, size_gib, read_iops, write_iops,
-read_mibps, write_mibps)` as float lists via `.numeric_columns()` — feed those
-straight into cvxopt, or treat each row as a binary selection variable in a MILP.
+`Requirement.build` accepts human units (`"10TB"`, `"512GiB"`, `"1.1GBps"`,
+`"10Gbps"`). `export.candidate_matrix(...)` returns machine columns (vCPU, memory,
+network, disk ceilings) plus disk columns and cost components; `.numeric_columns()`
+gives float lists (with `nan` for missing) ready for cvxopt, or treat each row as a
+binary selection variable in a MILP.
 
 ## 5. Reaching multi-GB/s: scale-out
 
@@ -179,8 +221,8 @@ n = min_replicas(opt, min_total_size_gib=Decimal("9313.2"), min_read_mibps=Decim
 fleet = scale_out(opt, n)   # sums disk cost/capacity/bandwidth
 ```
 
-`AggregateOption.cost_note` records that **only disk cost is summed** — VM instance
-cost is not in this dataset, so a fleet total is a lower bound.
+`AggregateOption.cost_note` records that **only disk cost is summed** — import
+machine prices if you want the fleet total to include the VMs.
 
 ## 6. Live data (regional prices, machine shapes)
 
@@ -196,7 +238,18 @@ poetry run python -m gcp_opt refresh-prices --region southamerica-east1
 # Authoritative machine shapes (vCPU/memory/disk-count ceilings) from the Compute API
 export GOOGLE_OAUTH_ACCESS_TOKEN="$(gcloud auth print-access-token)"
 poetry run python -m gcp_opt refresh-machine-types --project my-project
+
+# Machine (instance) prices so min-cost includes the VM, not just the disk.
+# Google's VM pricing page is client-side rendered, so import a price list
+# (JSON mapping or CSV) that you obtained from the Cloud Billing Catalog
+# "Instance Core"/"Instance Ram" SKUs for your region:
+poetry run python -m gcp_opt refresh-machine-prices \
+    --from-file machine_prices.json --region us-central1
 ```
+
+When `machine_prices.json` is absent, cost figures are reported as
+`cost_basis: "disk_only"` and the CLI prints an explicit note — a São Paulo query
+never silently inherits a US machine price.
 
 The Billing client paginates `services/6F81-5844-456A/skus` (the Compute Engine
 service id, cross-checked against Apache libcloud's GCE scraper), filters
@@ -219,21 +272,29 @@ poetry run python tools/refresh_snapshots.py
 
 ## 8. Deliberate limitations
 
+* **Machine prices are an optional layer, not bundled.** Google's VM pricing page
+  is rendered client-side, so the bootstrap ships none. Import a price list with
+  `refresh-machine-prices`; until then `ConfigOption.cost_basis` is `disk_only`
+  and `optimize(MIN_COST)` minimizes disk cost, tie-breaking toward the smallest
+  machine that satisfies the constraints. Machine objectives (max memory/cpu/net)
+  are unaffected.
+* **Network bandwidth comes from the docs, not the API.** The Compute Engine
+  `MachineType` resource has no bandwidth field, so `network_egress_gbps` is
+  scraped from the machine-family docs (`None` for families whose pages do not
+  publish it, e.g. some accelerator families). A `min` network constraint rejects
+  machines with unknown bandwidth; a `max` constraint does not.
 * **Hyperdisk is not modeled.** Hyperdisk performance is *provisioned* (IOPS and
   throughput are purchased separately) and is documented on a different page.
   Asking for it raises `UnmodeledDiskKindError` rather than inventing constants.
   Hyperdisk prices (capacity, provisioned IOPS/throughput) *are* captured.
 * **`pd-extreme` is modeled** (provisioned IOPS, throughput = IOPS × 256 KiB/s,
-  capacity + IOPS priced). It is included in `min-cost`/`max-bandwidth` by default
-  and excluded from the size-scaling candidate export (`export`), which cannot
-  represent a provisioned dimension.
+  capacity + IOPS priced) and included in disk searches by default.
 * **Regional (replicated) PD is not modeled**; only zonal scaling rules are
   pinned. Regional *prices* are captured.
 * **One disk kind per instance in the query helpers.** The performance formulas
   aggregate all volumes of one type, so splitting a size across disks of the same
   type changes neither cost nor performance; mixing types under a shared IOPS
   budget is a richer problem left to your solver.
-* **VM instance cost is excluded** (only disk prices are fetched).
 * Golden values were captured **2026-09-24**; the tests fail if Google changes a
   constant, which is the point.
 
@@ -242,7 +303,7 @@ poetry run python tools/refresh_snapshots.py
 | Fact | Source |
 | --- | --- |
 | Per-type caps, per-size formulas, per-machine-type/per-vCPU ceilings | https://cloud.google.com/compute/docs/disks/performance |
-| `MachineType` schema (and the absence of IOPS/throughput) | `https://compute.googleapis.com/$discovery/rest?version=v1` |
+| `MachineType` schema (no IOPS/throughput/bandwidth fields) | `https://compute.googleapis.com/$discovery/rest?version=v1` |
 | Disk capacity prices | https://cloud.google.com/compute/disks-image-pricing |
+| Machine vCPU/memory, disk-count/size ceilings, network egress bandwidth | https://cloud.google.com/compute/docs/general-purpose-machines (and the other family pages) |
 | Cloud Billing Catalog v1 + service id `6F81-5844-456A` | https://cloud.google.com/billing/docs/reference/rest/v1/services.skus/list |
-| Machine shapes (docs fallback) | https://cloud.google.com/compute/docs/general-purpose-machines |

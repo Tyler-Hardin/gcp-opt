@@ -17,10 +17,14 @@ def test_bundled_snapshots_load_and_verify(catalog: Catalog) -> None:
     assert catalog.dataset.limits.machine_type_limits
     assert catalog.dataset.limits.vcpu_limits
     assert len(catalog.machine_names()) > 100
-    for kind in SnapshotKind:
-        if kind is SnapshotKind.DISK_PERFORMANCE:
-            continue
+    for kind in (
+        SnapshotKind.MACHINE_TYPE_LIMITS,
+        SnapshotKind.MACHINE_TYPES,
+        SnapshotKind.PRICES,
+    ):
         assert kind in catalog.dataset.provenance
+    # Machine pricing is optional and not bundled in the bootstrap.
+    assert catalog.dataset.machine_prices == ()
 
 
 def test_explicit_machine_type_ceiling(catalog: Catalog) -> None:

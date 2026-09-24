@@ -170,6 +170,8 @@ def refresh_machine_types(pages: dict[str, str]) -> Path:
         )
         urls = record.get("urls")
         first_url = urls[0] if isinstance(urls, list) and urls else MACHINE_DOC_URLS[0]
+        egress = record.get("network_egress_gbps")
+        tier1 = record.get("network_tier1_egress_gbps")
         infos.append(
             MachineTypeInfo(
                 name=name,
@@ -182,6 +184,12 @@ def refresh_machine_types(pages: dict[str, str]) -> Path:
                     else None
                 ),
                 maximum_total_size_gib=maximum_total,
+                network_egress_gbps=(
+                    Decimal(str(egress)) if isinstance(egress, (int, str, Decimal)) else None
+                ),
+                network_tier1_egress_gbps=(
+                    Decimal(str(tier1)) if isinstance(tier1, (int, str, Decimal)) else None
+                ),
                 source=SourceRef(
                     url=str(first_url),
                     note=(

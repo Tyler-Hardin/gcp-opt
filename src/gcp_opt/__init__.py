@@ -1,3 +1,3 @@
-"""Grounded data layer for a GCP disk cost/performance optimizer."""
+"""Grounded data layer for a GCP machine + disk configuration optimizer."""
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"

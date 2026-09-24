@@ -59,6 +59,7 @@ class SnapshotKind(StrEnum):
     MACHINE_TYPE_LIMITS = "machine-type-disk-limits"
     MACHINE_TYPES = "machine-types"
     PRICES = "prices"
+    MACHINE_PRICES = "machine-prices"
 
 
 class SourceMethod(StrEnum):
@@ -295,12 +296,17 @@ class MachineTypeLimitTable(BaseModel):
 
 
 class MachineTypeInfo(BaseModel):
-    """Machine shape, as returned by the Compute Engine ``machineTypes`` API.
+    """Machine shape and capability ceilings.
 
-    ``maximum_total_size_gib`` is the total size of all attached disks.  Google's
-    API field is named ``maximumPersistentDisksSizeGb`` but the value it returns
-    is gibibytes (257 TiB is returned as ``263168``), so it is normalized to GiB
-    here to keep the rest of the package in binary units.
+    ``guest_cpus``/``memory_gb``/``maximum_persistent_disks``/
+    ``maximum_total_size_gib`` come from the Compute Engine ``machineTypes`` API
+    (or the docs fallback).  ``maximum_total_size_gib`` is normalized to GiB:
+    Google's API field is named ``maximumPersistentDisksSizeGb`` but returns
+    gibibytes (257 TiB is returned as ``263168``).
+
+    ``network_egress_gbps``/``network_tier1_egress_gbps`` come from the machine
+    family documentation, because the Compute API does **not** expose network
+    bandwidth on ``MachineType``.
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
@@ -311,10 +317,17 @@ class MachineTypeInfo(BaseModel):
     memory_gb: Decimal | None = None
     maximum_persistent_disks: int | None = None
     maximum_total_size_gib: Decimal | None = None
+    network_egress_gbps: Decimal | None = None
+    network_tier1_egress_gbps: Decimal | None = None
     zone: str | None = None
     architecture: str | None = None
     is_shared_cpu: bool | None = None
     source: SourceRef
+
+    @property
+    def memory_gib(self) -> Decimal | None:
+        """Memory in GiB (the docs' ``Memory (GB)`` values are GiB-priced binary)."""
+        return self.memory_gb
 
 
 # --------------------------------------------------------------------------- #
@@ -438,3 +451,142 @@ class DiskOption(BaseModel):
         if self.size_gib == 0:
             return Decimal(0)
         return self.monthly_cost_usd / self.size_gib
+
+
+# --------------------------------------------------------------------------- #
+# Machine pricing (optional layer) and combined configuration options
+# --------------------------------------------------------------------------- #
+
+
+class MachinePrice(BaseModel):
+    """On-demand hourly price of one machine type in one region.
+
+    Instance pricing is an **optional** layer: it is not in the bundled bootstrap
+    because Google's VM pricing page is rendered client-side.  Populate it with
+    ``python -m gcp_opt refresh-machine-prices`` (Billing Catalog) or your own
+    source; when it is absent the optimizer reports ``cost_basis="disk_only"``.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    machine_type: str
+    region: str
+    hourly_usd: Decimal
+    source: SourceRef
+
+    def monthly_usd(self, hours: Decimal = units.HOURS_PER_MONTH) -> Decimal:
+        """Return the 730-hour monthly price."""
+        return self.hourly_usd * hours
+
+
+class CostBasis(StrEnum):
+    """Which components a :class:`ConfigOption` cost figure includes."""
+
+    MACHINE_AND_DISK = "machine_and_disk"
+    DISK_ONLY = "disk_only"
+    MACHINE_ONLY = "machine_only"
+    UNKNOWN = "unknown"
+
+
+class Objective(StrEnum):
+    """A single axis to optimize over.
+
+    Capability axes (``max_vcpus``/``max_memory``/``max_network``/``max_disk_size``)
+    answer "what is the biggest X I can get"; cost and throughput axes answer the
+    classic sizing questions.
+    """
+
+    MIN_COST = "min_cost"
+    MAX_VCPUS = "max_vcpus"
+    MAX_MEMORY = "max_memory"
+    MAX_NETWORK = "max_network"
+    MAX_DISK_SIZE = "max_disk_size"
+    MAX_DISK_READ = "max_disk_read"
+    MAX_DISK_WRITE = "max_disk_write"
+    MAX_DISK_IOPS = "max_disk_iops"
+
+
+#: Objectives that require a disk to be attached.
+DISK_OBJECTIVES: frozenset[Objective] = frozenset(
+    {
+        Objective.MAX_DISK_SIZE,
+        Objective.MAX_DISK_READ,
+        Objective.MAX_DISK_WRITE,
+        Objective.MAX_DISK_IOPS,
+        Objective.MIN_COST,
+    }
+)
+
+
+class ConfigOption(BaseModel):
+    """A machine, optionally with one attached disk configuration.
+
+    This is the generalized optimizer row: the machine contributes vCPU, memory,
+    network bandwidth and disk-count/size ceilings; the disk contributes capacity,
+    IOPS and throughput; ``monthly_cost_usd`` sums whichever components are priced.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    machine: MachineTypeInfo
+    disk: DiskOption | None = None
+    machine_monthly_cost_usd: Decimal | None = None
+    monthly_cost_usd: Decimal | None = None
+    cost_basis: CostBasis = CostBasis.UNKNOWN
+    #: Human-readable note about how the cost was assembled (or why it is partial).
+    cost_note: str = ""
+
+    @property
+    def machine_type(self) -> str:
+        """Machine type name."""
+        return self.machine.name
+
+    @property
+    def guest_cpus(self) -> int | None:
+        """The vCPU count."""
+        return self.machine.guest_cpus
+
+    @property
+    def memory_gb(self) -> Decimal | None:
+        """Memory in GiB (GCP prices memory per GB but reports binary values)."""
+        return self.machine.memory_gb
+
+    @property
+    def network_egress_gbps(self) -> Decimal | None:
+        """Default (or maximum) egress bandwidth in Gbps."""
+        return self.machine.network_egress_gbps
+
+    @property
+    def disk_kind(self) -> DiskKind | None:
+        """Attached disk kind, if any."""
+        return self.disk.disk_kind if self.disk else None
+
+    @property
+    def size_gib(self) -> Decimal | None:
+        """Attached disk capacity in GiB, if any."""
+        return self.disk.size_gib if self.disk else None
+
+    @property
+    def read_mibps(self) -> Decimal | None:
+        """Achievable disk read throughput, if a disk is attached."""
+        return self.disk.read_mibps if self.disk else None
+
+    @property
+    def write_mibps(self) -> Decimal | None:
+        """Achievable disk write throughput, if a disk is attached."""
+        return self.disk.write_mibps if self.disk else None
+
+    @property
+    def read_iops(self) -> Decimal | None:
+        """Achievable disk read IOPS, if a disk is attached."""
+        return self.disk.read_iops if self.disk else None
+
+    @property
+    def write_iops(self) -> Decimal | None:
+        """Achievable disk write IOPS, if a disk is attached."""
+        return self.disk.write_iops if self.disk else None
+
+    @property
+    def disk_monthly_cost_usd(self) -> Decimal | None:
+        """Disk-only monthly cost, if a disk is attached."""
+        return self.disk.monthly_cost_usd if self.disk else None

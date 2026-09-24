@@ -4,11 +4,11 @@
   "provenance": {
     "method": "google_cloud_docs_scrape",
     "source_url": "https://cloud.google.com/compute/disks-image-pricing",
-    "retrieved_at": "2026-09-24T09:01:07Z",
+    "retrieved_at": "2026-09-24T20:05:22Z",
     "generator": "gcp-opt",
     "notes": "Bootstrap US list prices; use the Cloud Billing Catalog API for regional rates."
   },
-  "payload_sha256": "003c7939e8b3d1ed36e853fa045baf7420dfa312d617ec4a401829b5a97660f6",
+  "payload_sha256": "344f581cf9c9c0fd5042e55776d6474e32fda7f02bef0fc36c85f957754cc21b",
   "payload": {
     "currency_code": "USD",
     "region": "us-central1",
@@ -351,7 +351,7 @@
     "provenance": {
       "method": "google_cloud_docs_scrape",
       "source_url": "https://cloud.google.com/compute/disks-image-pricing",
-      "retrieved_at": "2026-09-24T09:01:07Z",
+      "retrieved_at": "2026-09-24T20:05:22Z",
       "generator": "gcp-opt",
       "notes": "Bootstrap US list prices; use the Cloud Billing Catalog API for regional rates."
     }

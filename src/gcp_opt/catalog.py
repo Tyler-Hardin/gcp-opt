@@ -5,10 +5,16 @@ from __future__ import annotations
 from collections.abc import Iterable, Sequence
 from decimal import Decimal
 
-from gcp_opt import constants
+from gcp_opt import constants, units
 from gcp_opt.dataset import Dataset
-from gcp_opt.errors import PriceUnavailableError, UnmodeledDiskKindError
+from gcp_opt.errors import (
+    PriceUnavailableError,
+    UnknownMachineTypeError,
+    UnmodeledDiskKindError,
+)
 from gcp_opt.models import (
+    ConfigOption,
+    CostBasis,
     DiskKind,
     DiskOption,
     DiskPerformanceModel,
@@ -255,6 +261,112 @@ class Catalog:
                     )
                 )
         return options
+
+    # -- machine pricing (optional) ---------------------------------------
+    def machine_hourly_price(self, machine_type: str, region: str | None = None) -> Decimal | None:
+        """Return the machine's on-demand hourly price, or ``None`` if unpriced.
+
+        Instance pricing is optional: the bundled bootstrap has none because
+        Google's VM pricing page is rendered client-side.
+        """
+        for price in self._dataset.machine_prices:
+            if price.machine_type == machine_type and (region is None or price.region == region):
+                return price.hourly_usd
+        return None
+
+    # -- combined configuration options -----------------------------------
+    def config_option(
+        self,
+        machine_type: str,
+        *,
+        region: str | None = None,
+        disk_kind: DiskKind | None = None,
+        size_gib: DecimalLike | None = None,
+        scope: Scope = Scope.ZONAL,
+        provisioned_iops: DecimalLike | None = None,
+        allow_us_list_price: bool = False,
+    ) -> ConfigOption:
+        """Build a machine (+ optional disk) configuration row.
+
+        Raises:
+            UnknownMachineTypeError: if the machine type is absent from the dataset.
+            ValueError: if ``disk_kind`` is given without ``size_gib``.
+        """
+        info = self.machine_info(machine_type)
+        if info is None:
+            raise UnknownMachineTypeError(machine_type)
+
+        hourly = self.machine_hourly_price(machine_type, region)
+        machine_cost = hourly * units.HOURS_PER_MONTH if hourly is not None else None
+
+        disk: DiskOption | None = None
+        if disk_kind is not None:
+            if size_gib is None:
+                raise ValueError("size_gib is required when disk_kind is given")
+            disk = self.disk_option(
+                machine_type,
+                disk_kind,
+                size_gib,
+                region=region,
+                scope=scope,
+                provisioned_iops=provisioned_iops,
+                allow_us_list_price=allow_us_list_price,
+            )
+        return self.assemble_config(info, disk=disk, machine_monthly_cost_usd=machine_cost)
+
+    def wrap_disk_option(self, disk: DiskOption) -> ConfigOption:
+        """Wrap an existing :class:`DiskOption` as a :class:`ConfigOption`."""
+        info = self.machine_info(disk.machine_type)
+        if info is None:
+            raise UnknownMachineTypeError(disk.machine_type)
+        hourly = self.machine_hourly_price(disk.machine_type, disk.region)
+        machine_cost = hourly * units.HOURS_PER_MONTH if hourly is not None else None
+        return self.assemble_config(info, disk=disk, machine_monthly_cost_usd=machine_cost)
+
+    def machine_only_option(self, machine_type: str, *, region: str | None = None) -> ConfigOption:
+        """Build a machine-only configuration row (no disk)."""
+        info = self.machine_info(machine_type)
+        if info is None:
+            raise UnknownMachineTypeError(machine_type)
+        hourly = self.machine_hourly_price(machine_type, region)
+        machine_cost = hourly * units.HOURS_PER_MONTH if hourly is not None else None
+        return self.assemble_config(info, disk=None, machine_monthly_cost_usd=machine_cost)
+
+    def assemble_config(
+        self,
+        info: MachineTypeInfo,
+        *,
+        disk: DiskOption | None,
+        machine_monthly_cost_usd: Decimal | None,
+    ) -> ConfigOption:
+        """Combine a machine and an optional disk into a :class:`ConfigOption`."""
+        if machine_monthly_cost_usd is not None and disk is not None:
+            basis = CostBasis.MACHINE_AND_DISK
+            total = machine_monthly_cost_usd + disk.monthly_cost_usd
+            note = "machine + disk capacity"
+        elif machine_monthly_cost_usd is not None:
+            basis = CostBasis.MACHINE_ONLY
+            total = machine_monthly_cost_usd
+            note = "machine only"
+        elif disk is not None:
+            basis = CostBasis.DISK_ONLY
+            total = disk.monthly_cost_usd
+            note = (
+                "disk cost only; no machine price in the snapshot "
+                "(run `python -m gcp_opt refresh-machine-prices`)"
+            )
+        else:
+            basis = CostBasis.UNKNOWN
+            total = None
+            note = "no cost components available"
+        return ConfigOption(
+            machine=info,
+            disk=disk,
+            machine_monthly_cost_usd=machine_monthly_cost_usd,
+            monthly_cost_usd=total,
+            cost_basis=basis,
+            cost_note=note,
+        )
 
 
 def load_catalog() -> Catalog:

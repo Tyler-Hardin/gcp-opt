@@ -1,7 +1,7 @@
 [project]
 name = "gcp-opt"
-version = "0.1.0"
-description = "Typed, grounded data layer that feeds a GCP disk cost/performance optimizer."
+version = "0.2.0"
+description = "Typed, grounded data layer that feeds a GCP machine + disk configuration optimizer."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
