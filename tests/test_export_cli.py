@@ -237,3 +237,37 @@ def test_cli_machines_ram_is_terse_for_fractional_values(
     row = capsys.readouterr().out.splitlines()[2].split()
     assert row[0] == "n1-standard-1"
     assert row[1] == "3.75"  # not "3.8" or "3.750"
+
+
+def _header_of(output: str) -> list[str]:
+    return next(line for line in output.splitlines() if line.startswith("machine_type")).split()
+
+
+def test_cli_option_table_shows_ram_and_net(capsys: pytest.CaptureFixture[str]) -> None:
+    assert (
+        main(
+            [
+                "max-bandwidth",
+                "--budget",
+                "3000",
+                "--min-size",
+                "10TB",
+                "--family",
+                "n2",
+                "-n",
+                "1",
+            ]
+        )
+        == 0
+    )
+    out = capsys.readouterr().out
+    assert _header_of(out)[:3] == ["machine_type", "ram", "net"]
+    row = out.splitlines()[2].split()
+    assert row[0] == "n2-highcpu-64"
+    assert row[1] == "64"  # RAM in GiB
+    assert row[2] == "32"  # network in Gbps
+
+
+def test_cli_search_table_shows_ram_and_net(capsys: pytest.CaptureFixture[str]) -> None:
+    assert main(["search", "--objective", "max_memory", "-n", "1"]) == 0
+    assert _header_of(capsys.readouterr().out)[:3] == ["machine_type", "ram", "net"]

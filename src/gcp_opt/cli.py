@@ -156,19 +156,22 @@ def _requirement_from_args(args: argparse.Namespace) -> Requirement:
     )
 
 
-def _print_options(options: list[DiskOption]) -> None:
+def _print_options(options: list[DiskOption], catalog: Catalog) -> None:
     header = (
-        f"{'machine_type':22s} {'disk':12s} {'size GiB':>12s} {'provIOPS':>9s} "
-        f"{'$/mo':>9s} {'rIOPS':>8s} {'wIOPS':>8s} {'rMiB/s':>8s} {'wMiB/s':>8s} "
-        f"{'vm-bound':>8s}"
+        f"{'machine_type':22s} {'ram':>8s} {'net':>6s} {'disk':12s} "
+        f"{'size GiB':>10s} {'provIOPS':>8s} {'$/mo':>9s} "
+        f"{'rIOPS':>8s} {'wIOPS':>8s} {'rMiB/s':>8s} {'wMiB/s':>8s} {'vm-bound':>8s}"
     )
     print(header)
     print("-" * len(header))
     for option in options:
+        info = catalog.machine_info(option.machine_type)
+        ram = info.memory_gb if info is not None else None
+        net = info.network_egress_gbps if info is not None else None
         print(
-            f"{option.machine_type:22s} {option.disk_kind.value:12s} "
-            f"{_fmt(option.size_gib, 0):>12s} {_fmt(option.provisioned_iops, 0):>9s} "
-            f"{_fmt(option.monthly_cost_usd):>9s} "
+            f"{option.machine_type:22s} {_fmt_terse(ram):>8s} {_fmt_terse(net):>6s} "
+            f"{option.disk_kind.value:12s} {_fmt(option.size_gib, 0):>10s} "
+            f"{_fmt(option.provisioned_iops, 0):>8s} {_fmt(option.monthly_cost_usd):>9s} "
             f"{_fmt(option.read_iops, 0):>8s} {_fmt(option.write_iops, 0):>8s} "
             f"{_fmt(option.read_mibps):>8s} {_fmt(option.write_mibps):>8s} "
             f"{'yes' if option.instance_bound else 'no':>8s}"
@@ -177,18 +180,19 @@ def _print_options(options: list[DiskOption]) -> None:
 
 def _print_configs(configs: list[ConfigOption]) -> None:
     header = (
-        f"{'machine_type':22s} {'vcpu':>5s} {'memGiB':>8s} {'netGbps':>7s} "
-        f"{'disk':>12s} {'size GiB':>12s} {'provIOPS':>9s} {'$/mo':>9s} {'basis':>17s}"
+        f"{'machine_type':22s} {'ram':>8s} {'net':>6s} {'vcpu':>5s} "
+        f"{'disk':>12s} {'size GiB':>10s} {'provIOPS':>8s} {'$/mo':>9s} {'basis':>17s}"
     )
     print(header)
     print("-" * len(header))
     for config in configs:
         print(
-            f"{config.machine.name:22s} {_fmt_int(config.guest_cpus):>5s} "
-            f"{_fmt(config.memory_gb, 1):>8s} {_fmt(config.network_egress_gbps, 1):>7s} "
+            f"{config.machine.name:22s} {_fmt_terse(config.memory_gb):>8s} "
+            f"{_fmt_terse(config.network_egress_gbps):>6s} "
+            f"{_fmt_int(config.guest_cpus):>5s} "
             f"{(config.disk_kind.value if config.disk_kind else '-'):>12s} "
-            f"{_fmt(config.size_gib, 0):>12s} "
-            f"{_fmt(config.disk.provisioned_iops if config.disk else None, 0):>9s} "
+            f"{_fmt(config.size_gib, 0):>10s} "
+            f"{_fmt(config.disk.provisioned_iops if config.disk else None, 0):>8s} "
             f"{_fmt(config.monthly_cost_usd):>9s} "
             f"{config.cost_basis.value:>17s}"
         )
@@ -297,7 +301,7 @@ def cmd_options(args: argparse.Namespace) -> int:
     if args.json:
         print(json.dumps([_option_payload(option) for option in options], indent=2))
     else:
-        _print_options(options)
+        _print_options(options, catalog)
     return 0
 
 
@@ -320,7 +324,7 @@ def cmd_min_cost(args: argparse.Namespace) -> int:
     if args.json:
         print(json.dumps([_option_payload(option) for option in options], indent=2))
     else:
-        _print_options(options)
+        _print_options(options, catalog)
     return 0
 
 
@@ -345,7 +349,7 @@ def cmd_max_bandwidth(args: argparse.Namespace) -> int:
     if args.json:
         print(json.dumps([_option_payload(option) for option in options], indent=2))
     else:
-        _print_options(options)
+        _print_options(options, catalog)
     return 0
 
 

@@ -3,7 +3,7 @@
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/)
 [![mypy: strict](https://img.shields.io/badge/mypy-strict-blue.svg)](https://mypy.readthedocs.io/)
 [![lint: ruff](https://img.shields.io/badge/lint-ruff-261230.svg)](https://docs.astral.sh/ruff/)
-[![tests: 155 passing](https://img.shields.io/badge/tests-155%20passing-brightgreen.svg)](#development)
+[![tests: 157 passing](https://img.shields.io/badge/tests-157%20passing-brightgreen.svg)](#development)
 [![license: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 **Grounded, typed data for a Google Cloud machine + disk configuration optimizer.**
@@ -20,22 +20,23 @@ disk throughput, and cost.
 
 ```console
 $ poetry run gcp-opt min-cost --min-size 10TB --min-read-bandwidth 4GBps
-machine_type           disk             size GiB  provIOPS      $/mo    rIOPS    wIOPS   rMiB/s   wMiB/s vm-bound
------------------------------------------------------------------------------------------------------------------
-n2-highcpu-64          pd-extreme           9313     15259   2155.97    15259    15259  3814.70  3000.00      yes
+machine_type                ram    net disk           size GiB provIOPS      $/mo    rIOPS    wIOPS   rMiB/s   wMiB/s vm-bound
+------------------------------------------------------------------------------------------------------------------------------
+n2-highcpu-64                64     32 pd-extreme         9313    15259   2155.97    15259    15259  3814.70  3000.00      yes
 
 $ poetry run gcp-opt search --objective max_network --min-memory 512GiB -n 3
 objective: max_network
-machine_type            vcpu   memGiB netGbps         disk     size GiB  provIOPS      $/mo             basis
--------------------------------------------------------------------------------------------------------------
-z4d-highmem-384-standardlssd   384   3024.0   400.0            -            -         -         -           unknown
-h4d-highmem-192          192   1488.0   200.0            -            -         -         -           unknown
-h4d-highmem-192-lssd     192   1488.0   200.0            -            -         -         -           unknown
+machine_type                ram    net  vcpu         disk   size GiB provIOPS      $/mo             basis
+---------------------------------------------------------------------------------------------------------
+z4d-highmem-384-standardlssd     3024    400   384            -          -        -         -           unknown
+h4d-highmem-192            1488    200   192            -          -        -         -           unknown
+h4d-highmem-192-lssd       1488    200   192            -          -        -         -           unknown
 ```
 
-`provIOPS` is the provisioned-IOPS level: `pd-extreme` performance is bought, so two
-rows can share a machine and a disk size yet differ in throughput and cost (e.g.
-16,000 vs 9,782 provisioned IOPS on the same `pd-extreme` volume).
+Every machine row starts with `machine_type`, `ram` (GiB) and `net` (Gbps egress
+bandwidth). `provIOPS` is the provisioned-IOPS level: `pd-extreme` performance is
+bought, so two rows can share a machine and a disk size yet differ in throughput
+and cost (e.g. 16,000 vs 9,782 provisioned IOPS on the same `pd-extreme` volume).
 
 
 > **What it is not.** This is a *data layer*, not a solver. It ships no optimization
@@ -384,7 +385,7 @@ rather than scraped. Until a price list is present, `ConfigOption.cost_basis` is
 
 ```bash
 poetry install --with dev
-poetry run pytest          # 155 tests: unit, golden, property-based
+poetry run pytest          # 157 tests: unit, golden, property-based
 poetry run mypy            # strict
 poetry run ruff check .    # lint + import order + docstrings
 ```
