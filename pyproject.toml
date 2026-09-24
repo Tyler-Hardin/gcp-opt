@@ -10,6 +10,9 @@ dependencies = [
     "pydantic>=2.9,<3",
 ]
 
+[project.scripts]
+gcp-opt = "gcp_opt.cli:main"
+
 [tool.poetry]
 packages = [{ include = "gcp_opt", from = "src" }]
 

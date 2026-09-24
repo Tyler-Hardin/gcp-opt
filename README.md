@@ -19,11 +19,11 @@ Every axis is a first-class target you can **constrain** (`min`/`max`) or
 disk throughput, and cost.
 
 ```console
-$ python -m gcp_opt min-cost --min-size 10TB --min-read-bandwidth 4GBps
+$ poetry run gcp-opt min-cost --min-size 10TB --min-read-bandwidth 4GBps
 machine_type    disk         size GiB    $/mo   rIOPS   wIOPS  rMiB/s  wMiB/s vm-bound
 n2-highcpu-64   pd-extreme       9313  2155.97   15259   15259 3814.70 3000.00      yes
 
-$ python -m gcp_opt search --objective max_network --min-memory 512GiB
+$ poetry run gcp-opt search --objective max_network --min-memory 512GiB
 z4d-highmem-384-standardlssd   384  3024.0  400.0  ...
 ```
 
@@ -92,30 +92,40 @@ Using pip instead:
 pip install -e .
 ```
 
+This installs a `gcp-opt` console script. The examples below use
+`poetry run gcp-opt`; if you ran `pip install -e .` or activated the virtualenv
+(`eval "$(poetry env activate)"`), drop the `poetry run` prefix and just use
+`gcp-opt`.
+
+> **`No module named gcp_opt` or `gcp-opt: command not found`?** You are running
+> outside the environment that has the package. Either prefix the command with
+> `poetry run`, activate the venv (`eval "$(poetry env activate)"`), or use the
+> module form inside it: `poetry run python -m gcp_opt ...`.
+
 ## Quickstart
 
 ```bash
 # Where did the numbers come from?
-python -m gcp_opt sources
+poetry run gcp-opt sources
 
 # Machine shapes: vCPU, memory, network, disk ceilings (and $/mo when priced)
-python -m gcp_opt machines --family n2 --sort memory
+poetry run gcp-opt machines --family n2 --sort memory
 
 # Maximize any axis, subject to any constraints
-python -m gcp_opt search --objective max_memory
-python -m gcp_opt search --objective max_network --min-memory 512GiB
-python -m gcp_opt search --objective max_vcpus --family n2
-python -m gcp_opt search --objective max_disk_read --min-size 10TB --budget 2000
+poetry run gcp-opt search --objective max_memory
+poetry run gcp-opt search --objective max_network --min-memory 512GiB
+poetry run gcp-opt search --objective max_vcpus --family n2
+poetry run gcp-opt search --objective max_disk_read --min-size 10TB --budget 2000
 
 # Cheapest config meeting targets: 16 vCPU, 1.1 GB/s, 10 TB
-python -m gcp_opt min-cost --min-vcpus 16 --min-size 10TB --min-read-bandwidth 1.1GBps
+poetry run gcp-opt min-cost --min-vcpus 16 --min-size 10TB --min-read-bandwidth 1.1GBps
 
 # Top 3 disk-throughput options under a budget (default is 5)
-python -m gcp_opt max-bandwidth --budget 3000 --min-size 10TB -n 3
+poetry run gcp-opt max-bandwidth --budget 3000 --min-size 10TB -n 3
 
 # Export a candidate matrix for your own solver
-python -m gcp_opt export --family n2 --sizes 100,500,1000,2000 --out candidates.csv
-python -m gcp_opt export --machines-only --out machines.csv
+poetry run gcp-opt export --family n2 --sizes 100,500,1000,2000 --out candidates.csv
+poetry run gcp-opt export --machines-only --out machines.csv
 ```
 
 From Python:
@@ -252,7 +262,7 @@ machine-type-disk-limits:
 Regenerate everything from the official docs:
 
 ```bash
-python tools/refresh_snapshots.py
+poetry run python tools/refresh_snapshots.py
 ```
 
 ## Verified facts (and common mistakes)
@@ -320,14 +330,14 @@ prices.
 ```bash
 # Regional, undiscounted on-demand disk prices (Cloud Billing Catalog API)
 export GCP_BILLING_API_KEY=...        # or GOOGLE_OAUTH_ACCESS_TOKEN=...
-python -m gcp_opt refresh-prices --region southamerica-east1
+poetry run gcp-opt refresh-prices --region southamerica-east1
 
 # Authoritative machine shapes (Compute Engine API)
 export GOOGLE_OAUTH_ACCESS_TOKEN="$(gcloud auth print-access-token)"
-python -m gcp_opt refresh-machine-types --project my-project
+poetry run gcp-opt refresh-machine-types --project my-project
 
 # Machine (instance) prices so min-cost includes the VM, not just the disk
-python -m gcp_opt refresh-machine-prices --from-file machine_prices.json --region us-central1
+poetry run gcp-opt refresh-machine-prices --from-file machine_prices.json --region us-central1
 ```
 
 Google's VM pricing page is rendered client-side, so machine prices are imported
