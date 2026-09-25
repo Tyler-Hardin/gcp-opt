@@ -370,6 +370,7 @@ def top_min_cost_options(
     *,
     requirement: Requirement,
     top: int = 5,
+    require_machine_price: bool | None = None,
     region: str | None = None,
     disk_kinds: tuple[DiskKind, ...] = ALL_MODELED_DISK_KINDS,
     scope: Scope = Scope.ZONAL,
@@ -391,12 +392,18 @@ def top_min_cost_options(
         scope: zonal or regional.
         allow_us_list_price: accept US list prices for a non-US region.
         require_known_limit: skip machines whose VM-level disk ceiling is unknown.
+        require_machine_price: require an instance price for candidate machines.
+            Defaults to auto: required whenever the dataset has any machine prices,
+            so priced (VM + disk) and unpriced (disk-only) rows are never mixed.
 
     Raises:
         InfeasibleTargetError: if no configuration satisfies the requirement.
     """
     scored: list[tuple[Decimal, Decimal, DiskOption]] = []
     rejections: list[str] = []
+    must_price = (
+        catalog.has_machine_prices if require_machine_price is None else require_machine_price
+    )
 
     for machine_type in machine_types:
         info = catalog.machine_info(machine_type)
@@ -408,6 +415,11 @@ def top_min_cost_options(
         elif requirement.machine_required:
             rejections.append(
                 f"{machine_type}: unknown machine cannot satisfy machine constraints"
+            )
+            continue
+        if must_price and catalog.machine_hourly_price(machine_type, region) is None:
+            rejections.append(
+                f"{machine_type}: no machine price (run refresh-machine-prices)"
             )
             continue
         for disk_kind in disk_kinds:
@@ -505,6 +517,7 @@ def min_cost_option(
     scope: Scope = Scope.ZONAL,
     allow_us_list_price: bool = False,
     require_known_limit: bool = True,
+    require_machine_price: bool | None = None,
 ) -> DiskOption:
     """Return the single cheapest configuration meeting every requirement."""
     return top_min_cost_options(
@@ -517,6 +530,7 @@ def min_cost_option(
         scope=scope,
         allow_us_list_price=allow_us_list_price,
         require_known_limit=require_known_limit,
+        require_machine_price=require_machine_price,
     )[0]
 
 
@@ -608,6 +622,7 @@ def top_throughput_options(
     *,
     budget_usd: DecimalLike,
     top: int = 5,
+    require_machine_price: bool | None = None,
     min_total_size_gib: DecimalLike = 0,
     metric: ThroughputMetric = "read",
     region: str | None = None,
@@ -637,6 +652,9 @@ def top_throughput_options(
     min_size = effective.min_total_size_gib
     scored: list[tuple[Decimal, Decimal, DiskOption]] = []
     rejections: list[str] = []
+    must_price = (
+        catalog.has_machine_prices if require_machine_price is None else require_machine_price
+    )
 
     for machine_type in machine_types:
         info = catalog.machine_info(machine_type)
@@ -655,6 +673,11 @@ def top_throughput_options(
         machine_budget = budget - vm_cost
         if machine_budget <= 0:
             rejections.append(f"{machine_type}: the VM alone exceeds the budget")
+            continue
+        if must_price and catalog.machine_hourly_price(machine_type, region) is None:
+            rejections.append(
+                f"{machine_type}: no machine price (run refresh-machine-prices)"
+            )
             continue
         for disk_kind in disk_kinds:
             try:
@@ -744,6 +767,7 @@ def max_throughput_option(
     allow_us_list_price: bool = False,
     require_known_limit: bool = True,
     requirement: Requirement | None = None,
+    require_machine_price: bool | None = None,
 ) -> DiskOption:
     """Return the single highest-throughput configuration within a budget."""
     return top_throughput_options(
@@ -759,6 +783,7 @@ def max_throughput_option(
         allow_us_list_price=allow_us_list_price,
         require_known_limit=require_known_limit,
         requirement=requirement,
+        require_machine_price=require_machine_price,
     )[0]
 
 
@@ -952,6 +977,7 @@ def top_disk_metric_options(
     objective: Objective,
     budget_usd: DecimalLike,
     top: int = 5,
+    require_machine_price: bool | None = None,
     requirement: Requirement | None = None,
     region: str | None = None,
     disk_kinds: tuple[DiskKind, ...] = ALL_MODELED_DISK_KINDS,
@@ -980,6 +1006,9 @@ def top_disk_metric_options(
     base = requirement or Requirement()
     scored: list[tuple[Decimal, Decimal, DiskOption]] = []
     rejections: list[str] = []
+    must_price = (
+        catalog.has_machine_prices if require_machine_price is None else require_machine_price
+    )
 
     for machine_type in machine_types:
         info = catalog.machine_info(machine_type)
@@ -995,6 +1024,11 @@ def top_disk_metric_options(
         machine_budget = budget - vm_cost
         if machine_budget <= 0:
             rejections.append(f"{machine_type}: the VM alone exceeds the budget")
+            continue
+        if must_price and catalog.machine_hourly_price(machine_type, region) is None:
+            rejections.append(
+                f"{machine_type}: no machine price (run refresh-machine-prices)"
+            )
             continue
         for disk_kind in disk_kinds:
             try:
@@ -1053,6 +1087,7 @@ def max_disk_metric_option(
     scope: Scope = Scope.ZONAL,
     allow_us_list_price: bool = False,
     require_known_limit: bool = True,
+    require_machine_price: bool | None = None,
 ) -> DiskOption:
     """Return the single best configuration for one disk metric objective."""
     return top_disk_metric_options(
@@ -1067,6 +1102,7 @@ def max_disk_metric_option(
         scope=scope,
         allow_us_list_price=allow_us_list_price,
         require_known_limit=require_known_limit,
+        require_machine_price=require_machine_price,
     )[0]
 
 
@@ -1293,6 +1329,7 @@ def rank_configs(
                         scope=scope,
                         allow_us_list_price=allow_us_list_price,
                         require_known_limit=require_known_limit,
+                        require_machine_price=False,
                     )
                 except InfeasibleTargetError as error:
                     rejections.append(f"{info.name}: {error}")

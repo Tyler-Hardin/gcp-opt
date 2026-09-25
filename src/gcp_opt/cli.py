@@ -7,6 +7,7 @@ import csv
 import json
 import os
 import sys
+from collections.abc import Callable
 from dataclasses import replace
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
@@ -160,11 +161,75 @@ def _requirement_from_args(args: argparse.Namespace) -> Requirement:
     )
 
 
+def _warn_unpriced(catalog: Catalog, machines: list[str], region: str | None) -> None:
+    """Warn when some candidate machines have no price and are excluded."""
+    if not catalog.has_machine_prices:
+        return
+    unpriced = [name for name in machines if catalog.machine_hourly_price(name, region) is None]
+    if unpriced:
+        print(
+            f"note: {len(unpriced)} of {len(machines)} selected machines have no machine "
+            "price and were excluded from cost ranking "
+            "(run `gcp-opt refresh-machine-prices`)",
+            file=sys.stderr,
+        )
+
+
+def _fmt_iops(value: Decimal | None) -> str:
+    """Format IOPS compactly: ``16k``, ``9.8k``, ``900``."""
+    if value is None:
+        return "-"
+    if value >= 1000:
+        thousands = value / 1000
+        if thousands == thousands.to_integral_value():
+            return f"{int(thousands)}k"
+        return f"{thousands:.1f}k"
+    return f"{value:.0f}"
+
+
+def _fmt_bw(value: Decimal | None) -> str:
+    """Format throughput compactly from MiB/s: ``1.1G``, ``800M``."""
+    if value is None:
+        return "-"
+    if value >= 1000:
+        return f"{value / 1024:.1f}G"
+    return f"{value:.0f}M"
+
+
+def _fmt_capacity(value: Decimal | None) -> str:
+    """Format GiB capacity compactly: ``9.1T``, ``500``."""
+    if value is None:
+        return "-"
+    if value >= 1024:
+        return f"{value / 1024:.1f}T"
+    return f"{value:.0f}"
+
+
+def _fmt_pair(
+    read: Decimal | None, write: Decimal | None, formatter: Callable[[Decimal | None], str]
+) -> str:
+    """Format a read/write pair: ``4.0G/3.0G``."""
+    if read is None and write is None:
+        return "-"
+    return f"{formatter(read)}/{formatter(write)}"
+
+
+#: Compact cost-basis labels for the table.
+_BASIS_LABEL: dict[CostBasis, str] = {
+    CostBasis.MACHINE_AND_DISK: "vm+disk",
+    CostBasis.DISK_ONLY: "disk",
+    CostBasis.MACHINE_ONLY: "vm",
+    CostBasis.UNKNOWN: "?",
+}
+
+
 def _print_options(options: list[DiskOption], catalog: Catalog) -> None:
+    name_width = max((len(option.machine_type) for option in options), default=0)
+    name_width = max(name_width, len("machine_type"))
     header = (
-        f"{'machine_type':22s} {'ram':>8s} {'net':>6s} {'disk':12s} "
-        f"{'size GiB':>10s} {'provIOPS':>8s} {'$/mo':>9s} "
-        f"{'rIOPS':>8s} {'wIOPS':>8s} {'rMiB/s':>8s} {'wMiB/s':>8s} {'vm-bound':>8s}"
+        f"{'machine_type':<{name_width}s} {'ram':>7s} {'net':>4s} {'disk':>11s} "
+        f"{'size':>5s} {'provIOPS':>8s} {'IOPS r/w':>9s} {'bw r/w':>9s} "
+        f"{'$/mo':>9s} {'vm-bound':>8s}"
     )
     print(header)
     print("-" * len(header))
@@ -173,55 +238,45 @@ def _print_options(options: list[DiskOption], catalog: Catalog) -> None:
         ram = info.memory_gb if info is not None else None
         net = info.network_egress_gbps if info is not None else None
         print(
-            f"{option.machine_type:22s} {_fmt_terse(ram):>8s} {_fmt_terse(net):>6s} "
-            f"{option.disk_kind.value:12s} {_fmt(option.size_gib, 0):>10s} "
-            f"{_fmt(option.provisioned_iops, 0):>8s} {_fmt(option.monthly_cost_usd):>9s} "
-            f"{_fmt(option.read_iops, 0):>8s} {_fmt(option.write_iops, 0):>8s} "
-            f"{_fmt(option.read_mibps):>8s} {_fmt(option.write_mibps):>8s} "
+            f"{option.machine_type:<{name_width}s} {_fmt_terse(ram):>7s} {_fmt_terse(net):>4s} "
+            f"{option.disk_kind.value:>11s} {_fmt_capacity(option.size_gib):>5s} "
+            f"{_fmt_iops(option.provisioned_iops):>8s} "
+            f"{_fmt_pair(option.read_iops, option.write_iops, _fmt_iops):>9s} "
+            f"{_fmt_pair(option.read_mibps, option.write_mibps, _fmt_bw):>9s} "
+            f"{_fmt(option.monthly_cost_usd):>9s} "
             f"{'yes' if option.instance_bound else 'no':>8s}"
         )
 
 
 def _print_configs(configs: list[ConfigOption]) -> None:
+    name_width = max((len(config.machine.name) for config in configs), default=0)
+    name_width = max(name_width, len("machine_type"))
     header = (
-        f"{'machine_type':22s} {'ram':>8s} {'net':>6s} {'vcpu':>5s} "
-        f"{'disk':>12s} {'size GiB':>10s} {'provIOPS':>8s} "
-        f"{'vm$':>9s} {'disk$':>9s} {'$/mo':>9s} {'basis':>16s}"
+        f"{'machine_type':<{name_width}s} {'ram':>7s} {'net':>4s} {'vcpu':>4s} "
+        f"{'disk':>11s} {'size':>5s} {'provIOPS':>8s} {'IOPS r/w':>9s} "
+        f"{'bw r/w':>9s} {'vm$':>8s} {'disk$':>8s} {'$/mo':>8s} {'basis':>7s}"
     )
     print(header)
     print("-" * len(header))
-    disk_only = False
     for config in configs:
-        if config.cost_basis is CostBasis.DISK_ONLY:
-            disk_only = True
         print(
-            f"{config.machine.name:22s} {_fmt_terse(config.memory_gb):>8s} "
-            f"{_fmt_terse(config.network_egress_gbps):>6s} "
-            f"{_fmt_int(config.guest_cpus):>5s} "
-            f"{(config.disk_kind.value if config.disk_kind else '-'):>12s} "
-            f"{_fmt(config.size_gib, 0):>10s} "
-            f"{_fmt(config.disk.provisioned_iops if config.disk else None, 0):>8s} "
-            f"{_fmt(config.machine_monthly_cost_usd):>9s} "
-            f"{_fmt(config.disk_monthly_cost_usd):>9s} "
-            f"{_fmt(config.monthly_cost_usd):>9s} "
-            f"{config.cost_basis.value:>16s}"
+            f"{config.machine.name:<{name_width}s} {_fmt_terse(config.memory_gb):>7s} "
+            f"{_fmt_terse(config.network_egress_gbps):>4s} "
+            f"{_fmt_int(config.guest_cpus):>4s} "
+            f"{(config.disk_kind.value if config.disk_kind else '-'):>11s} "
+            f"{_fmt_capacity(config.size_gib):>5s} "
+            f"{_fmt_iops(config.disk.provisioned_iops if config.disk else None):>8s} "
+            f"{_fmt_pair(config.read_iops, config.write_iops, _fmt_iops):>9s} "
+            f"{_fmt_pair(config.read_mibps, config.write_mibps, _fmt_bw):>9s} "
+            f"{_fmt(config.machine_monthly_cost_usd):>8s} "
+            f"{_fmt(config.disk_monthly_cost_usd):>8s} "
+            f"{_fmt(config.monthly_cost_usd):>8s} "
+            f"{_BASIS_LABEL[config.cost_basis]:>7s}"
         )
-        if config.disk is not None:
-            print(
-                f"    disk: rIOPS={_fmt(config.read_iops, 0)} wIOPS={_fmt(config.write_iops, 0)} "
-                f"rMiB/s={_fmt(config.read_mibps)} wMiB/s={_fmt(config.write_mibps)}"
-            )
-            if config.disk.provisioned_iops is not None:
-                print(
-                    "    disk$: capacity "
-                    f"${_fmt(config.disk.capacity_monthly_cost_usd)} + provisioned IOPS "
-                    f"${_fmt(config.disk.provisioned_iops_monthly_cost_usd)}"
-                )
-    if disk_only:
+    if any(config.cost_basis is CostBasis.DISK_ONLY for config in configs):
         print(
-            "\nnote: cost is DISK ONLY -- no machine prices in the snapshot, so the "
-            "vm$ column is empty.\n"
-            "      run `gcp-opt refresh-machine-prices` to price the VM too."
+            "\nnote: no machine prices -- $/mo is disk only. "
+            "Run `gcp-opt refresh-machine-prices`."
         )
 
 
@@ -277,9 +332,11 @@ def cmd_machines(args: argparse.Namespace) -> int:
     }[args.sort]
     infos.sort(key=key)
 
+    name_width = max((len(info.name) for info in infos), default=0)
+    name_width = max(name_width, len("machine_type"))
     header = (
-        f"{'machine_type':22s} {'ram':>8s} {'net':>6s} {'family':>7s} {'vcpu':>5s} "
-        f"{'tier1':>6s} {'maxDisks':>8s} {'maxTotGiB':>10s} {'$/mo':>9s}"
+        f"{'machine_type':<{name_width}s} {'ram':>8s} {'net':>6s} {'family':>7s} "
+        f"{'vcpu':>5s} {'tier1':>6s} {'maxDisks':>8s} {'maxTotGiB':>10s} {'$/mo':>9s}"
     )
     print(header)
     print("-" * len(header))
@@ -287,7 +344,7 @@ def cmd_machines(args: argparse.Namespace) -> int:
         hourly = catalog.machine_hourly_price(info.name, args.region)
         monthly = hourly * units.HOURS_PER_MONTH if hourly is not None else None
         print(
-            f"{info.name:22s} {_fmt_terse(info.memory_gb):>8s} "
+            f"{info.name:<{name_width}s} {_fmt_terse(info.memory_gb):>8s} "
             f"{_fmt_terse(info.network_egress_gbps):>6s} {info.family or '-':>7s} "
             f"{_fmt_int(info.guest_cpus):>5s} "
             f"{_fmt_terse(info.network_tier1_egress_gbps):>6s} "
@@ -322,6 +379,7 @@ def cmd_options(args: argparse.Namespace) -> int:
 def cmd_min_cost(args: argparse.Namespace) -> int:
     catalog = _load_catalog()
     machines = _select_machines(catalog, machine_types=args.machine_types, family=args.family)
+    _warn_unpriced(catalog, machines, args.region)
     try:
         configs = rank_configs(
             catalog,
@@ -346,6 +404,7 @@ def cmd_min_cost(args: argparse.Namespace) -> int:
 def cmd_max_bandwidth(args: argparse.Namespace) -> int:
     catalog = _load_catalog()
     machines = _select_machines(catalog, machine_types=args.machine_types, family=args.family)
+    _warn_unpriced(catalog, machines, args.region)
     objective = {
         "read": Objective.MAX_DISK_READ,
         "write": Objective.MAX_DISK_WRITE,
@@ -379,6 +438,7 @@ def cmd_max_bandwidth(args: argparse.Namespace) -> int:
 def cmd_search(args: argparse.Namespace) -> int:
     catalog = _load_catalog()
     machines = _select_machines(catalog, machine_types=args.machine_types, family=args.family)
+    _warn_unpriced(catalog, machines, args.region)
     objective = Objective(args.objective)
     requirement = _requirement_from_args(args)
     if args.budget:

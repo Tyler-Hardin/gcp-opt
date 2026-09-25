@@ -313,9 +313,9 @@ def test_cli_machine_prices_env_adds_vm_cost(
         == 0
     )
     out = capsys.readouterr().out
-    assert "machine_and_disk" in out
+    assert "vm+disk" in out
     assert "365.00" in out  # 0.5/hour * 730 hours, shown in the vm$ column
-    assert "DISK ONLY" not in out
+    assert "no machine prices" not in out
 
 
 def test_cli_refresh_machine_prices_requires_a_source(
@@ -385,3 +385,16 @@ def test_cli_refresh_machine_prices_conflicting_sources() -> None:
         )
         == 2
     )
+
+
+def test_compact_number_formatting() -> None:
+    from gcp_opt.cli import _fmt_bw, _fmt_capacity, _fmt_iops
+
+    assert _fmt_iops(Decimal(16000)) == "16k"
+    assert _fmt_iops(Decimal(9782)) == "9.8k"
+    assert _fmt_iops(Decimal(900)) == "900"
+    assert _fmt_iops(None) == "-"
+    assert _fmt_bw(Decimal("1136.52")) == "1.1G"  # MiB/s -> GiB/s
+    assert _fmt_bw(Decimal(800)) == "800M"
+    assert _fmt_capacity(Decimal(10000)) == "9.8T"
+    assert _fmt_capacity(Decimal(500)) == "500"

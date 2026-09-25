@@ -301,3 +301,25 @@ def test_rank_configs_disk_budget_totals_vm_and_disk(catalog: Catalog) -> None:
     assert config.disk_monthly_cost_usd is not None
     assert config.machine_monthly_cost_usd == Decimal(365)
     assert config.monthly_cost_usd == config.machine_monthly_cost_usd + config.disk_monthly_cost_usd
+
+
+def test_unpriced_machines_are_excluded_when_prices_exist(catalog: Catalog) -> None:
+    """A partial price book must not mix disk-only rows into a priced ranking."""
+    price = MachinePrice(
+        machine_type="n2-standard-8",
+        region="us-central1",
+        hourly_usd=Decimal("0.5"),
+        source=SourceRef(url="test://price"),
+    )
+    priced = Catalog(replace(catalog.dataset, machine_prices=(price,)))
+    configs = rank_configs(
+        priced,
+        ["n2-standard-8", "n2-standard-4"],
+        objective=Objective.MIN_COST,
+        requirement=Requirement.build(min_total_size_gib="1TB"),
+        region="us-central1",
+        top=5,
+    )
+    assert configs  # the priced machine still yields solutions
+    assert {config.machine_type for config in configs} == {"n2-standard-8"}
+    assert all(config.cost_basis is CostBasis.MACHINE_AND_DISK for config in configs)

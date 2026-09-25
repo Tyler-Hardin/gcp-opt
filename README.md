@@ -3,7 +3,7 @@
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/)
 [![mypy: strict](https://img.shields.io/badge/mypy-strict-blue.svg)](https://mypy.readthedocs.io/)
 [![lint: ruff](https://img.shields.io/badge/lint-ruff-261230.svg)](https://docs.astral.sh/ruff/)
-[![tests: 182 passing](https://img.shields.io/badge/tests-182%20passing-brightgreen.svg)](#development)
+[![tests: 184 passing](https://img.shields.io/badge/tests-184%20passing-brightgreen.svg)](#development)
 [![license: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 **Grounded, typed data for a Google Cloud machine + disk configuration optimizer.**
@@ -20,32 +20,31 @@ disk throughput, and cost.
 
 ```console
 $ poetry run gcp-opt min-cost --min-size 10TB --min-read-bandwidth 4GBps
-machine_type                ram    net  vcpu         disk   size GiB provIOPS       vm$     disk$      $/mo            basis
-----------------------------------------------------------------------------------------------------------------------------
-n2-highcpu-64                64     32    64   pd-extreme       9313    15259         -   2155.97   2155.97        disk_only
-    disk: rIOPS=15259 wIOPS=15259 rMiB/s=3814.70 wMiB/s=3000.00
-    disk$: capacity $1164.15 + provisioned IOPS $991.82
+machine_type             ram  net vcpu        disk  size provIOPS  IOPS r/w    bw r/w      vm$    disk$     $/mo   basis
+------------------------------------------------------------------------------------------------------------------------
+n2-highcpu-64             64   32   64  pd-extreme  9.1T    15.3k 15.3k/15.3k 3.7G/2.9G        -  2155.97  2155.97    disk
 
-note: cost is DISK ONLY -- no machine prices in the snapshot, so the vm$ column is empty.
-      run `gcp-opt refresh-machine-prices` to price the VM too.
+note: no machine prices -- $/mo is disk only. Run `gcp-opt refresh-machine-prices`.
 
 $ poetry run gcp-opt search --objective max_network --min-memory 512GiB -n 2
 objective: max_network
-machine_type                ram    net  vcpu         disk   size GiB provIOPS       vm$     disk$      $/mo            basis
-----------------------------------------------------------------------------------------------------------------------------
-z4d-highmem-384-standardlssd     3024    400   384            -          -        -         -         -         -          unknown
-h4d-highmem-192            1488    200   192            -          -        -         -         -         -          unknown
+machine_type                     ram  net vcpu        disk  size provIOPS  IOPS r/w    bw r/w      vm$    disk$     $/mo   basis
+--------------------------------------------------------------------------------------------------------------------------------
+z4d-highmem-384-standardlssd    3024  400  384           -     -        -         -         -        -        -        -       ?
+h4d-highmem-192                 1488  200  192           -     -        -         -         -        -        -        -       ?
 ```
 
-Every machine row starts with `machine_type`, `ram` (GiB) and `net` (Gbps egress
-bandwidth). `provIOPS` is the provisioned-IOPS level: `pd-extreme` performance is
-bought, so two rows can share a machine and a disk size yet differ in throughput
-and cost (e.g. 16,000 vs 9,782 provisioned IOPS on the same `pd-extreme` volume).
+One row per configuration. Every machine row starts with `machine_type`, `ram`
+(GiB) and `net` (Gbps egress bandwidth), and numbers are compacted for reading:
+IOPS as `16k` / `9.8k`, throughput as `1.1G` / `800M`, capacity as `9.1T`.
+`provIOPS` is the provisioned-IOPS level — `pd-extreme` performance is bought, so
+two rows can share a machine and a disk size yet differ in throughput and cost.
+
 `vm$`, `disk$` and `$/mo` break the cost down; `$/mo` is the **pairing total** the
-ranking uses, and `basis` (`machine_and_disk` vs `disk_only`) says whether machine
-prices were available. Populate them with
-[`refresh-machine-prices`](#refreshing-live-data), and the budget constraint then
-covers the VM *plus* its disks.
+ranking uses, and `basis` (`vm+disk` vs `disk`) says whether machine prices were
+available. When a price snapshot exists, machines without a price are **excluded**
+so a disk-only row can never look artificially cheap next to a VM + disk row.
+Populate prices with [`refresh-machine-prices`](#refreshing-live-data).
 
 
 > **What it is not.** This is a *data layer*, not a solver. It ships no optimization
@@ -420,7 +419,7 @@ back unpriced, use `--from-file`. Prices can also live outside the package: poin
 
 ```bash
 poetry install --with dev
-poetry run pytest          # 182 tests: unit, golden, property-based
+poetry run pytest          # 184 tests: unit, golden, property-based
 poetry run mypy            # strict
 poetry run ruff check .    # lint + import order + docstrings
 ```

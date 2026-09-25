@@ -263,6 +263,11 @@ class Catalog:
         return options
 
     # -- machine pricing (optional) ---------------------------------------
+    @property
+    def has_machine_prices(self) -> bool:
+        """True when the dataset carries any instance prices."""
+        return bool(self._dataset.machine_prices)
+
     def machine_hourly_price(self, machine_type: str, region: str | None = None) -> Decimal | None:
         """Return the machine's on-demand hourly price, or ``None`` if unpriced.
 
