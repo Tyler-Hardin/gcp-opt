@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from decimal import Decimal
 from pathlib import Path
 
 import pytest
@@ -11,6 +12,7 @@ from gcp_opt.catalog import Catalog
 from gcp_opt.cli import main
 from gcp_opt.export import COLUMNS, NUMERIC_COLUMNS, candidate_matrix, write_csv, write_json
 from gcp_opt.models import DiskKind
+from gcp_opt.pricing import MachineFamilyPrice
 
 
 def test_candidate_matrix_shape(catalog: Catalog) -> None:
@@ -323,3 +325,63 @@ def test_cli_refresh_machine_prices_requires_a_source(
     monkeypatch.delenv("GOOGLE_OAUTH_ACCESS_TOKEN", raising=False)
     assert main(["refresh-machine-prices"]) == 2
     assert main(["refresh-machine-prices", "--from-billing"]) == 2
+
+
+class _FakeBilling:
+    """Stands in for BillingCatalogClient so --from-billing works offline."""
+
+    def __init__(self, **_: object) -> None:
+        pass
+
+    def fetch_machine_family_prices(
+        self, *, region: str, known_families: set[str], currency_code: str = "USD"
+    ) -> list[MachineFamilyPrice]:
+        return [
+            MachineFamilyPrice(
+                family="n2",
+                region=region,
+                core_hourly_usd=Decimal("0.03"),
+                ram_gib_hourly_usd=Decimal("0.004"),
+            )
+        ]
+
+
+def test_cli_refresh_machine_prices_from_billing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import gcp_opt.cli as cli
+
+    monkeypatch.setattr(cli, "BillingCatalogClient", _FakeBilling)
+    monkeypatch.setattr(cli, "resolve_access_token", lambda explicit=None: ("tok", "explicit"))
+    out = tmp_path / "machine_prices.json"
+    assert (
+        main(
+            [
+                "refresh-machine-prices",
+                "--from-billing",
+                "--region",
+                "us-central1",
+                "--out",
+                str(out),
+            ]
+        )
+        == 0
+    )
+    assert out.exists()
+
+    monkeypatch.setenv("GCP_OPT_MACHINE_PRICES", str(out))
+    assert main(["machines", "--machine-types", "n2-standard-8"]) == 0
+
+
+def test_cli_refresh_machine_prices_conflicting_sources() -> None:
+    assert (
+        main(
+            [
+                "refresh-machine-prices",
+                "--from-billing",
+                "--from-file",
+                "prices.json",
+            ]
+        )
+        == 2
+    )

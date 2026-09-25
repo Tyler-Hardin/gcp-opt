@@ -3,7 +3,7 @@
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/)
 [![mypy: strict](https://img.shields.io/badge/mypy-strict-blue.svg)](https://mypy.readthedocs.io/)
 [![lint: ruff](https://img.shields.io/badge/lint-ruff-261230.svg)](https://docs.astral.sh/ruff/)
-[![tests: 172 passing](https://img.shields.io/badge/tests-172%20passing-brightgreen.svg)](#development)
+[![tests: 182 passing](https://img.shields.io/badge/tests-182%20passing-brightgreen.svg)](#development)
 [![license: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 **Grounded, typed data for a Google Cloud machine + disk configuration optimizer.**
@@ -122,6 +122,11 @@ This installs a `gcp-opt` console script. The examples below use
 > outside the environment that has the package. Either prefix the command with
 > `poetry run`, activate the venv (`eval "$(poetry env activate)"`), or use the
 > module form inside it: `poetry run python -m gcp_opt ...`.
+>
+> **Moved or copied the project?** Poetry keys its virtualenv to the project path,
+> so a moved checkout points at a different, empty venv. Run `poetry install` again
+> in the new location to recreate the environment and the `gcp-opt` script. Check
+> with `poetry env info -p`.
 
 ## Quickstart
 
@@ -350,21 +355,26 @@ prices.
 
 ```bash
 # Regional, undiscounted on-demand disk prices (Cloud Billing Catalog API)
-export GCP_BILLING_API_KEY=...        # or GOOGLE_OAUTH_ACCESS_TOKEN=...
 poetry run gcp-opt refresh-prices --region southamerica-east1
 
-# Authoritative machine shapes (Compute Engine API)
-export GOOGLE_OAUTH_ACCESS_TOKEN="$(gcloud auth print-access-token)"
-poetry run gcp-opt refresh-machine-types --project my-project
+# Authoritative machine shapes (Compute Engine API); --project is optional
+poetry run gcp-opt refresh-machine-types
 
 # Machine (instance) prices, so cost rankings cover the VM + disk pairing.
 # Two ways:
 #   (a) from the Cloud Billing Catalog (per-family Instance Core / Instance Ram)
-poetry run gcp-opt refresh-machine-prices --from-billing \
-    --region us-central1 --access-token "$(gcloud auth print-access-token)"
+poetry run gcp-opt refresh-machine-prices --from-billing --region us-central1
 #   (b) from your own list: JSON mapping {"n2-standard-8": 0.5} or CSV with hourly_usd
 poetry run gcp-opt refresh-machine-prices --from-file machine_prices.json --region us-central1
 ```
+
+**Credentials resolve automatically.** Each live command takes `--access-token` /
+`--api-key`, then falls back to `GOOGLE_OAUTH_ACCESS_TOKEN` /
+`GCP_ACCESS_TOKEN` / `GCP_BILLING_API_KEY`, and finally to the **GCE metadata
+server** — so on a Compute Engine instance with a service account (the
+`cloud-platform` scope) no flags or tokens are needed, and `refresh-machine-types`
+reads the project id from metadata too. On a workstation, use
+`--access-token "$(gcloud auth print-access-token)"`.
 
 Machine prices are what make the cost meaningful: without them the `$/mo` column is
 **disk only** and every `basis` reads `disk_only`, which the CLI states explicitly.
@@ -410,7 +420,7 @@ back unpriced, use `--from-file`. Prices can also live outside the package: poin
 
 ```bash
 poetry install --with dev
-poetry run pytest          # 172 tests: unit, golden, property-based
+poetry run pytest          # 182 tests: unit, golden, property-based
 poetry run mypy            # strict
 poetry run ruff check .    # lint + import order + docstrings
 ```

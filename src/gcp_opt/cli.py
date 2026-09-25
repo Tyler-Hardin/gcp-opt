@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any, cast
 
 from gcp_opt import constants, units
+from gcp_opt.auth import metadata_project_id, resolve_access_token
 from gcp_opt.catalog import Catalog
 from gcp_opt.compute import ComputeMachineTypeClient
 from gcp_opt.dataset import Dataset
@@ -431,14 +432,17 @@ def cmd_export(args: argparse.Namespace) -> int:
 
 def cmd_refresh_prices(args: argparse.Namespace) -> int:
     api_key = args.api_key or os.environ.get("GCP_BILLING_API_KEY")
-    token = args.access_token or os.environ.get("GOOGLE_OAUTH_ACCESS_TOKEN")
+    token, source = resolve_access_token(args.access_token)
     if not api_key and not token:
         print(
-            "error: provide --api-key/--access-token (or GCP_BILLING_API_KEY / "
-            "GOOGLE_OAUTH_ACCESS_TOKEN)",
+            "error: no credentials found. Pass --api-key/--access-token, set "
+            "GCP_BILLING_API_KEY or GOOGLE_OAUTH_ACCESS_TOKEN, or run on a GCE "
+            "instance with a service account.",
             file=sys.stderr,
         )
         return 2
+    if source == "gce-metadata":
+        print("using GCE instance credentials (metadata server)", file=sys.stderr)
     client = BillingCatalogClient(api_key=api_key, access_token=token)
     book = client.fetch_disk_price_book(region=args.region, currency_code=args.currency)
     provenance = book.provenance
@@ -449,19 +453,32 @@ def cmd_refresh_prices(args: argparse.Namespace) -> int:
 
 
 def cmd_refresh_machine_types(args: argparse.Namespace) -> int:
-    token = args.access_token or os.environ.get("GOOGLE_OAUTH_ACCESS_TOKEN")
+    from datetime import UTC, datetime
+
+    token, source = resolve_access_token(args.access_token)
     if not token:
-        print("error: provide --access-token or GOOGLE_OAUTH_ACCESS_TOKEN", file=sys.stderr)
+        print(
+            "error: no credentials found. Pass --access-token, set "
+            "GOOGLE_OAUTH_ACCESS_TOKEN, or run on a GCE instance with a service account.",
+            file=sys.stderr,
+        )
         return 2
-    client = ComputeMachineTypeClient(project=args.project, access_token=token)
+    if source == "gce-metadata":
+        print("using GCE instance credentials (metadata server)", file=sys.stderr)
+    project = args.project or metadata_project_id()
+    if not project:
+        print(
+            "error: provide --project (could not read it from the metadata server)",
+            file=sys.stderr,
+        )
+        return 2
+    client = ComputeMachineTypeClient(project=project, access_token=token)
     infos: list[MachineTypeInfo] = client.aggregated_list()
     if not infos:
         print("error: Compute API returned no machine types", file=sys.stderr)
         return 2
-    from datetime import UTC, datetime
-
     source_url = (
-        f"{constants.COMPUTE_API_BASE_URL}/projects/{args.project}/aggregated/machineTypes"
+        f"{constants.COMPUTE_API_BASE_URL}/projects/{project}/aggregated/machineTypes"
     )
     provenance = Provenance(
         method=SourceMethod.COMPUTE_MACHINE_TYPES,
@@ -532,14 +549,17 @@ def cmd_refresh_machine_prices(args: argparse.Namespace) -> int:
 
     if args.from_billing:
         api_key = args.api_key or os.environ.get("GCP_BILLING_API_KEY")
-        token = args.access_token or os.environ.get("GOOGLE_OAUTH_ACCESS_TOKEN")
+        token, token_source = resolve_access_token(args.access_token)
         if not api_key and not token:
             print(
-                "error: --from-billing needs --api-key/--access-token "
-                "(or GCP_BILLING_API_KEY / GOOGLE_OAUTH_ACCESS_TOKEN)",
+                "error: --from-billing needs credentials. Pass --api-key/--access-token, "
+                "set GCP_BILLING_API_KEY or GOOGLE_OAUTH_ACCESS_TOKEN, or run on a GCE "
+                "instance with a service account.",
                 file=sys.stderr,
             )
             return 2
+        if token_source == "gce-metadata":
+            print("using GCE instance credentials (metadata server)", file=sys.stderr)
         catalog = _load_catalog()
         families = {
             info.family for info in catalog.dataset.machine_types.values() if info.family
@@ -745,7 +765,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_mt = sub.add_parser(
         "refresh-machine-types", help="fetch machine shapes from the Compute Engine API"
     )
-    p_mt.add_argument("--project", required=True)
+    p_mt.add_argument("--project", help="project id (default: instance metadata)")
     p_mt.add_argument("--access-token")
     p_mt.add_argument("--out")
     p_mt.set_defaults(func=cmd_refresh_machine_types)
